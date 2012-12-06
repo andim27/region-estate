@@ -13,6 +13,12 @@
       #link_to "load", "rayons_geo/load"
       button_to_function "Load","loadPoly();", :class => "action_item"
     end
+    action_item do
+     # button_to "Load rayons polygons","rayons_geo/load_rayons_poly", :remote =>true, :success => "alert(request)"
+      button_to_function "Load rayons polygons", "load_rayons_poly();"
+                     #:url => "rayons_geo/load_rayons_poly",
+
+    end
     # /admin/posts/:id/comments
     controller do
       def create_poly
@@ -27,6 +33,10 @@
       def load_poly
         @r=Rayon.find(params[:rayon_id].to_i)
         render :text=> @r.contur
+      end
+      def load_rayons_poly
+        r_poly=Rayon.select("id,name,contur").where("parent=2775")
+        render :json =>r_poly
       end
     end
     #---------------------------------------

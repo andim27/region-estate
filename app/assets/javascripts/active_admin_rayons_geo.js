@@ -38,6 +38,24 @@ function stringify (coords) {
 
     return res;
 }
+function setCenter() {
+    var lat=$("#lat_center").val();
+    var long=$("#long_center").val();
+    myMap.setCenter([lat,long]);
+    // Создаем метку с помощью вспомогательного класса.
+   // myCenter = new ymaps.Placemark(lat, long), {
+        // Свойства.
+        // Содержимое иконки, балуна и хинта.
+    //    iconContent: '1',
+    //    balloonContent: 'Центр',
+    //    hintContent: 'Центр карты'
+    //};//, {
+        // Опции.
+        // Стандартная фиолетовая иконка.
+      //  preset: 'twirl#violetIcon'
+    //});
+   // myMap.geoObjects.add(myCenter);
+}
 function setPolyOnMap(polygon) {
     myGeometry = {
         type: 'Polygon',
@@ -60,6 +78,19 @@ function setPolyOnMap(polygon) {
         printGeometry(myGeoobject.geometry.getCoordinates());
         rayons_coorditates.n_0=myGeoobject.geometry.getCoordinates();
     });
+    myMap.events.add('contextmenu', function (e) {
+        var coords = e.get('coordPosition');
+        myMap.hint.show(e.get('coordPosition'), 'Координаты:\n'+ coords[0].toPrecision(8)+", "+
+            coords[1].toPrecision(8));
+    });
+    myMap.events.add('actiontick', function (e) {
+        var tick = e.get('tick');
+        console.log('Now the map is moving to the point (' +
+            myMap.options.get('projection').fromGlobalPixels(tick.globalPixelCenter, tick.zoom).join(',') +
+            ') during ' + e.get('tick').duration + ' milliseconds');
+        $("#lat_center").val(myMap.getCenter()[0]);
+        $("#long_center").val(myMap.getCenter()[1]);
+    });
     myMap.geoObjects.add(myGeoobject);
     printGeometry(myGeoobject.geometry.getCoordinates());
     myGeoobject.editor.startEditing();
@@ -69,6 +100,7 @@ function createPoly() {
     console.log('create poly!');
     cur_rayon_id=$('#rayons_name :selected').val();
     rayons_coorditates["n_"+cur_rayon_id]=rayons_coorditates.n_0;
+    setPolyOnMap(rayons_coorditates.n_0);
    // myMap.myGeometry.coordinates =rayons_coorditates["n_"+cur_rayon_id];
 }
 function savePoly() {
@@ -93,12 +125,71 @@ function loadPoly() {
         function(data) {
             //alert(data);
             myPolygon=eval(data)[0];//fillPolyFromStr(data);
-            console.log(myPolygon);
+            //console.log(myPolygon);
             setPolyOnMap(myPolygon);
             rayons_coorditates["n_"+cur_rayon_id]=myPolygon;
         }
     )
 }
+function makeMapPolygons(p) {
+    PolygonCollection=new ymaps.GeoObjectArray()
+
+    mypolygons={}
+    myOptions = {
+        strokeWidth: 4,
+        strokeColor: '#0000FF', // синий
+        fillColor: '#FFFF00', // желтый
+        opacity: 0.4,//прозрачность
+        draggable: false
+    };
+    //if (myGeoobject.geometry !=undefined){
+    //    myGeoobject.geometry.remove();
+    //}
+    //myMap.geoObjects.remove();
+    console.info("p.length="+ p.length)
+    for (var i=0; i< p.length;i++) { //p.length
+        var correct_polygon=eval(p[i].contur);
+        if (p[i].contur=="") continue;
+        var myPolygon = new ymaps.Polygon(correct_polygon, {
+            hintContent:p[i].name
+        }, {
+            fillColor: '#6699ff',
+            // Делаем полигон прозрачным для событий карты.
+            interactivityModel: 'default#transparent',
+            strokeWidth: 3,
+            opacity: 0.5
+        });
+
+//        myGeometry = {
+//            type: 'Polygon',
+//            coordinates: [ correct_polygon ]
+//        };
+        console.table(correct_polygon)
+        //var myPolygon=new ymaps.GeoObject({geometry: myGeometry},  myOptions);
+        var cur_id=p[i].id;
+        console.info(cur_id)
+        mypolygons[cur_id]=myPolygon;
+        console.info("SET for "+cur_id+" l="+ mypolygons[cur_id])
+        PolygonCollection.add(mypolygons[cur_id])
+
+    }
+    myMap.geoObjects.add(PolygonCollection)
+    myMap.setBounds(PolygonCollection.getBounds());
+}
+function load_rayons_poly(){
+    rayons_poly={};
+    $.post(
+        "rayons_geo/load_rayons_poly",
+        {rayon_id:cur_rayon_id},
+        function(data) {
+             rayons_poly=data;
+             console.log(rayons_poly);
+             makeMapPolygons(rayons_poly);
+        }
+    )
+}
+
+//---------------------------------MAP-------------------------------
 // Как только будет загружен API и готов DOM, выполняем инициализацию
 ymaps.ready(init);
 myGeometry=myGeoobject={};
@@ -107,23 +198,6 @@ function init () {
             center: [49.98, 36.32],
             zoom: 10
         }),
-       // myGeometry = {
-       //     type: 'Polygon',
-       //    coordinates: [ rayons_coorditates.n_0
-                //[
-                //    [49.976072, 36.210448], //36.210448,49.976072
-                //    [50.032719,36.305205],  // 36.305205,50.032719
-                //    [49.94152, 36.338164] // 36.338164,49.94152
-                //]
-       //     ]
-       // },
-//        myOptions = {
-//            strokeWidth: 4,
-//            strokeColor: '#0000FF', // синий
-//            fillColor: '#FFFF00', // желтый
-//            opacity: 0.4,//прозрачность
-//            draggable: true      // объект можно перемещать, зажав левую кнопку мыши
-//        };
     //--кнопки управления
     myMap.controls
         // Кнопка изменения масштаба
@@ -135,7 +209,7 @@ function init () {
         .add('smallZoomControl', { right: 5, top: 75 })
         // Стандартный набор кнопок
         .add('mapTools');
-     setPolyOnMap(rayons_coorditates.n_0);
+    /// setPolyOnMap(rayons_coorditates.n_0);
     // Создаем геообъект с определенной (в switch) геометрией.
     //myGeoobject = new ymaps.GeoObject({geometry: myGeometry}, myOptions);
 
@@ -148,12 +222,12 @@ function init () {
    // });
 
     // Размещаем геообъект на карте
-    myMap.geoObjects.add(myGeoobject);
+   /// myMap.geoObjects.add(myGeoobject);
     // ... и выводим его координаты.
-    printGeometry(myGeoobject.geometry.getCoordinates());
+   /// printGeometry(myGeoobject.geometry.getCoordinates());
     // Подключаем к геообъекту редактор, позволяющий
     // визуально добавлять/удалять/перемещать его вершины.
-    myGeoobject.editor.startEditing();
+    //myGeoobject.editor.startEditing();
 }
 
 // Выводит массив координат геообъекта в <div id="geometry">
