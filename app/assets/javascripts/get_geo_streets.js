@@ -2,7 +2,7 @@ var map;
 var geocoder;
 var marker;
 var lines = new Array();
-var start_cur=1
+var start_cur=61
 var streets_list={}
 var cnt_i=0;
 var cnt_work=10;
@@ -29,17 +29,21 @@ function initialize() {
 google.maps.event.addDomListener(window, 'load', initialize);
 
 function save_streets(){
+    console.info("SAVE STREETS...start_cur="+start_cur)
     $.post(
         "get_geo_streets/save_streets",
         {items:streets_list},
         function (data) {
             console.log("saved data "+data)
+            streets_list={};
+            start_cur=start_cur+cnt_work;
+            cnt_i=0;
         },
         "json"
     )
 }
 function getStreets(start,end) {
-    if (start >= 20){//--ALL RECORDS SEEN 2570
+    if (start >= 200){//--ALL RECORDS SEEN 2570
         window.clearInterval(timerid);
         return;
     }
@@ -77,7 +81,6 @@ function getGEOStreets() {
     if (cnt_i >= cnt_work){
         window.clearInterval(timerid);
         save_streets();
-        start_cur=start_cur+cnt_work;
         getStreets(start_cur,cnt_work);
     } else {
         console.log("start getGEOStreets:"+cnt_i);
