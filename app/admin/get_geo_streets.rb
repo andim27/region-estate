@@ -2,7 +2,7 @@
     menu :label => "GetGeoStreets", :parent => "Dashboard"
     controller do
        def get_streets
-           str=Street.select("id,name_rus").order("name_rus asc").limit(params[:start]+",10")
+           str=Street.select("id,name_rus").order("name_rus asc").where("center_lat is NULL").limit("0,10")
            render :json=>str
        end
       def save_streets
@@ -13,7 +13,7 @@
           #@out=item.inspect
           Rails.logger.info item[1]["name_rus"]+" "+item[1]["lat"]+" " +item[1]["lng"]
         end
-        render :json=>params[:items]
+        render :text=>items.length ##:json=>params[:items]
       end
     end
 
@@ -22,7 +22,7 @@
     end
     action_item do
       #link_to "View Streets", "/streets"
-      button_to_function "start get streets","getStreets(1);"
+      button_to_function "start get streets","getStreets();"
     end
     sidebar :streets_coordinate_log do
       form do |f|

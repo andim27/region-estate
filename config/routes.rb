@@ -9,6 +9,9 @@ Estate::Application.routes.draw do
   match 'admin/rayons_geo/create_poly' => 'admin/rayons_geo#create_poly'
   match 'admin/rayons_geo/save_poly' => 'admin/rayons_geo#save_poly'
   match 'admin/rayons_geo/load_poly' => 'admin/rayons_geo#load_poly'
+  match 'admin/rayons_geo/load_streets' => 'admin/rayons_geo#load_streets'
+  match 'admin/rayons_geo/save_streets' => 'admin/rayons_geo#save_streets'
+
   match 'admin/rayons_geo/load_rayons_poly' => 'admin/rayons_geo#load_rayons_poly'
   match 'admin/get_geo_streets/get_streets' => 'admin/get_geo_streets#get_streets'
   match 'admin/get_geo_streets/save_streets' => 'admin/get_geo_streets#save_streets'

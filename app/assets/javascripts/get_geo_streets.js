@@ -2,7 +2,7 @@ var map;
 var geocoder;
 var marker;
 var lines = new Array();
-var start_cur=61
+var start_cur=1
 var streets_list={}
 var cnt_i=0;
 var cnt_work=10;
@@ -34,7 +34,7 @@ function save_streets(){
         "get_geo_streets/save_streets",
         {items:streets_list},
         function (data) {
-            console.log("saved data "+data)
+            console.log("saved data cnt="+data);
             streets_list={};
             start_cur=start_cur+cnt_work;
             cnt_i=0;
@@ -43,11 +43,13 @@ function save_streets(){
     )
 }
 function getStreets(start,end) {
-    if (start >= 200){//--ALL RECORDS SEEN 2570
+    if (start >= 500){//--ALL RECORDS SEEN 2570
         window.clearInterval(timerid);
         return;
     }
+    if (start_cur >100){console.clear();}
     $("#start_txt").val(start_cur)
+    console.log("getStreets loading...start_cur="+start_cur);
     $.post(
         "get_geo_streets/get_streets",
         {start:start_cur},
@@ -55,7 +57,7 @@ function getStreets(start,end) {
             console.log(data)
             streets_list=data
             streets_work_html=""
-            for (var i=0;i<streets_list.length;i++){
+            for (var i=0;i < streets_list.length;i++){
                 streets_work_html+="<ul>"+streets_list[i].name_rus+"</ul>"
                 streets_list[i].lat=0;
                 streets_list[i].lng=0;
@@ -71,11 +73,11 @@ function set_latlng(a,b){
     streets_list[cnt_i].lng=b;
     cnt_i=cnt_i+1;
    }finally {
-    console.log("set lat "+a+" set lng "+b+" cnt_i="+cnt_i);
+    //console.log("set lat "+a+" set lng "+b+" cnt_i="+cnt_i);
    }
 }
 function fillGeoStreets() {
-    timerid= window.setInterval(getGEOStreets,900);
+    timerid= window.setInterval(getGEOStreets,1001);
 }
 function getGEOStreets() {
     if (cnt_i >= cnt_work){
@@ -84,13 +86,29 @@ function getGEOStreets() {
         getStreets(start_cur,cnt_work);
     } else {
         console.log("start getGEOStreets:"+cnt_i);
+        if (cnt_i >= streets_list.length ) {
+            console.log("ERROR getGEOStreets L="+streets_list.length);
+            window.clearInterval(timerid);
+            save_streets();
+            sleep(2000);
+            getStreets();
+            return;
+        }
+
+        if (streets_list[cnt_i].name_rus == undefined){
+            console.log("ERROR getGEOStreets L="+streets_list.length+" cnt_i="+cnt_i);
+            window.clearInterval(timerid);
+            sleep(2000);
+            getStreets();
+            return;
+        }
         var address = "Харьков,"+ streets_list[cnt_i].name_rus;
         geocoder = new google.maps.Geocoder();
         geocoder.geocode( { 'address': address}, function(results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
                 set_latlng(results[0].geometry.location.lat(),results[0].geometry.location.lng())
             } else {
-                console.error("Geocode was not successful for "+res_arr[i].id+" the following reason: " + status);
+                console.error("Geocode was not successful for cnt_i="+cnt_i+" the following reason: " + status);
             }
         },false);
     }

@@ -2,7 +2,10 @@
 console.log("aaaa");
 cur_rayon_id=0;
 rayons_coorditates={};
+var streets_list={};
 myPolygon=[];
+var start_cur=0;
+var cnt_work=20;
 rayons_coorditates.n_0=[
     [49.976072, 36.210448], //36.210448,49.976072
     [50.032719,36.305205],  // 36.305205,50.032719
@@ -167,9 +170,9 @@ function makeMapPolygons(p) {
         console.table(correct_polygon)
         //var myPolygon=new ymaps.GeoObject({geometry: myGeometry},  myOptions);
         var cur_id=p[i].id;
-        console.info(cur_id)
+        //console.info(cur_id)
         mypolygons[cur_id]=myPolygon;
-        console.info("SET for "+cur_id+" l="+ mypolygons[cur_id])
+        //console.info("SET for "+cur_id+" l="+ mypolygons[cur_id])
         PolygonCollection.add(mypolygons[cur_id])
 
     }
@@ -183,12 +186,74 @@ function load_rayons_poly(){
         {rayon_id:cur_rayon_id},
         function(data) {
              rayons_poly=data;
-             console.log(rayons_poly);
+             //console.log(rayons_poly);
              makeMapPolygons(rayons_poly);
         }
     )
 }
+//-----------------------B:-STREET IN RAYONS-------------------------
+function fillRayonsStreets() {
 
+    for (var i=0;i<streets_list.length;i++){
+            for (key_rayon_id in mypolygons) {
+                 poly= mypolygons[key_rayon_id];
+                 lat=streets_list[i].center_lat;
+                 lng=streets_list[i].center_lng;
+                 console.log("fillRayonsStreets i="+i+" lat="+lat+" lng="+lng+" key_rayon_id="+key_rayon_id+" "+streets_list[i].name_rus);
+                try {
+                    if (poly.geometry.contains([lat,lng]) == true) {//--street in rayon
+                        console.info("FOUNDED!!! in "+key_rayon_id)
+                        streets_list[i].rayons_id.push(key_rayon_id)
+                    }
+                } catch (e) {
+                    console.log(e.name)
+                }
+            }
+    }
+
+    console.log("fillRayonsStreets ...")
+    console.table(streets_list)
+    save_streets();
+}
+function load_streets() {
+    if (start_cur>20) {
+        console.log("DONE: "+start_cur);
+        return;
+    }
+    console.info("LOAD STREETS...start_cur="+start_cur)
+    $.post(
+        "rayons_geo/load_streets",
+        {start:start_cur},
+        function (data){
+
+            streets_list=data
+            console.log("Loaded..."+streets_list.length)
+            streets_work_html=""
+            for (var i=0;i < streets_list.length;i++){
+                streets_work_html+="<ul>"+streets_list[i].name_rus+"</ul>"
+                streets_list[i].rayons_id=[];
+            }
+            $("#streets_in_work").html(streets_work_html)
+            fillRayonsStreets();
+        }
+    )
+}
+function save_streets(){
+    console.info("SAVE STREETS...start_cur="+start_cur)
+    $.post(
+        "rayons_geo/save_streets",
+        {items:streets_list},
+        function (data) {
+            console.log("saved data cnt="+data);
+            streets_list={};
+            start_cur=start_cur+cnt_work;
+            if (start_cur >50){console.clear();}
+            $("#start_txt").val(start_cur)
+            load_streets();
+        },
+        "json"
+    )
+}
 //---------------------------------MAP-------------------------------
 // Как только будет загружен API и готов DOM, выполняем инициализацию
 ymaps.ready(init);
