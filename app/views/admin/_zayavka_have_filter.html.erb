@@ -1,0 +1,122 @@
+<h2>Select have attributes</h2>
+<%
+   rayon_names=Rayon.where("parent=2775 ").select("id,name").order("name")
+   obj_names=Obj.order("id").all
+
+%>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#q_rayons_name").bind("change",function(){
+            fillStreets(this);
+            }
+        )
+        if (window.location.search.match(/rayon_id/) !=null) {
+            pre_r_id=window.location.search.split("rayon_id=")[1]
+            if ( pre_r_id.indexOf("&") !=0){
+                r_id=pre_r_id.split("&")[0]
+            } else {
+                r_id=pre_r_id
+            }
+            $("#q_rayons_name").val(parseInt(r_id))
+        }
+    });
+    function fillStreets(el){
+        r_id=el.options[el.selectedIndex].value;
+        $.post(
+                "http://<%=request.env["HTTP_HOST"] %>/streets/inrayon/"+r_id,
+                {rayon_id:r_id},
+                function(data) {
+
+                    op_str="<option value='0'>Any street</option>";
+                    for (el in data) {
+                        op_str+="<option value='"+data[el].id+"'>"+data[el].name+"</option>";
+                    }
+                    $("#q_street_name").html(op_str)
+                },
+                "json"
+        )
+    }
+    function filterUrlStr(){
+        out_str="";
+        obj_id=$("#q_obj_id").val();
+        rayon_id=$("#q_rayons_name").val();
+        street_id=$("#q_streets_name").val();
+        room=$("#q_room").val();
+        obmen_want = $("#q_obmen_want").attr("checked")
+        sell_want  = $("#q_sell_want").attr("checked")
+        rent_want  = $("#q_rent_want").attr("checked")
+        price_from = $("#q_price_from").val();
+        price_to   = $("#q_price_to").val();
+        if (rayon_id !=""){
+           out_str="&rayon_id="+rayon_id
+        }
+        if (street_id != undefined){
+            out_str="&street_id="+street_id
+        }
+        if (room !=""){
+            out_str+="&room="+room
+        }
+        if (obj_id !=""){
+            out_str+="&obj_id="+obj_id
+        }
+        if (obmen_want == "checked") {
+            out_str+="&obmen_want=1"
+        }
+        if (sell_want == "checked") {
+            out_str+="&sell_want=1"
+        }
+        if (rent_want == "checked") {
+            out_str+="&rent_want=1"
+        }
+        if (price_from !=0) {
+            out_str+="&price_from="+price_from
+        }
+        if (price_to !=0) {
+            out_str+="&price_to="+price_to
+        }
+        return out_str
+    }
+    function filterHaveUrl(){
+        window.location.href='/admin/zayavkas?filterhave=1'+filterUrlStr()//+$("#q_rayons_name").val();
+    }
+    function clearFilterHaveUrl(){
+        window.location.href='/admin/zayavkas';
+    }
+</script>
+
+<!--<form id="rayon_search" class="filter_form" method="get" action="/admin/streets?rrr=" accept-charset="UTF-8"  onSubmit="return doThis(this.commit)">-->
+<input  type="checkbox" title="Обмен" id="q_obmen_want" value="0">Obmen</input>
+<input  type="checkbox" title="Sell"  id="q_sell_want"  value="0">Sell</input>
+<input  type="checkbox" title="Rent"  id="q_rent_want"  value="0">Rent</input>
+<label class=" label" for="q_obj_id">Object</label>
+<%= select_tag(:q_obj_id,options_from_collection_for_select(obj_names, "id", "name"), :prompt => "Select object" ) %>
+<label class=" label" for="q_room">Room</label>
+<input id="q_room" type="text" name="q_room" size="2" maxlength="2">
+<label class=" label" for="q_rayon_id">Rayon</label>
+<%= select_tag(:q_rayons_name,options_from_collection_for_select(rayon_names, "id", "name"), :prompt => "Select rayon" ) %>
+<br><br>
+<label class=" label" for="q_street_id">Street</label>
+<select id="q_streets_name" name="q_street_name" >
+  <option>Select rayon</option>
+</select><a style="display:block;float:right" href='javascript: fillStreets(document.getElementById("q_rayons_name"))' title="fillStreets"><<<</a>
+<br><br>
+<label class=" label" for="q_price_want_from">Price want</label>
+<table width="100%">
+  <tr>
+    <td>From:</td>
+    <td><input style="width: 70%;" id="q_price_from" type="text" name="q_price_from" size="10" maxlength="10" value="0" /></td>
+  </tr>
+  <tr>
+    <td>To:</td>
+    <td><input style="width: 70%;" id="q_price_to" type="text" name="q_price_to" size="10" maxlength="10" value="0" /></td>
+  </tr>
+</table>
+
+
+<div class="buttons">
+  <input type="submit" value="Filter" name="commit" onclick="filterHaveUrl();" >
+  <a class="clear_filters_btn" href="javascript:clearFilterHaveUrl();">Clear Filters</a>
+  <input id="order" type="hidden" value="id_asc" name="order">
+</div>
+<!--
+</form>-->
