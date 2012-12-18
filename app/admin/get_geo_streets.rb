@@ -1,6 +1,9 @@
  ActiveAdmin.register_page "get_geo_streets" do
     menu :label => "GetGeoStreets", :parent => "Dashboard"
     controller do
+      def index
+
+      end
        def get_streets
            str=Street.select("id,name_rus").order("name_rus asc").where("center_lat is NULL").limit("0,10")
            render :json=>str
@@ -24,6 +27,7 @@
       #link_to "View Streets", "/streets"
       button_to_function "start get streets","getStreets();"
     end
+
     sidebar :streets_coordinate_log do
       form do |f|
         f.label"Start from:"
@@ -41,6 +45,7 @@
       end
     end
     content do
+      render :template =>"admin/get_geo_streets"
       h1 "Get Geo Streets"
       div :id=>"map", :style=>"width: 80%; height: 400px; position: relative; background-color: rgb(229, 227, 223); overflow: hidden;"
       div :id=>"address"

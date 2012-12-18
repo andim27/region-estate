@@ -47,11 +47,16 @@
       def save_streets
         items=params[:items]
         items.each do |item|
-          rs=Rayons_street.new
-          item[1]["rayons_id"].each do |r_id|
-            rs.rayon_id=r_id
-            rs.street_id=item[1]["id"]
-            rs.save
+
+          r_arr= item[1]["rayons_id"].to_a
+          r_arr.each do |r_id|
+            #Rails.logger.info "STREET "+item[1]["id"]+" RAYONS "+r_id
+            if r_id.length >=1
+              rs=Rayons_street.new
+              rs.rayon_id=r_id
+              rs.street_id=item[1]["id"]
+              rs.save
+            end
           end
         end
         render :text=>items.length
