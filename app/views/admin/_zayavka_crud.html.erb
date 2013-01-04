@@ -64,9 +64,22 @@
                //---fill models data
                App.main_view= new App.MainView();
                App.main_view.addHaveForm();
-               //---generate templates
-               $("#tbs-haves").idTabs();
+               //---generate templates in TABS
+               $("#tbs-haves").tabs(
+                   {
+                       width:"550px",
+                       height:"auto",
+                       border:true,
+                       fit:false,
+                       onSelect:function(title){
+                           //alert(title+' is selected');
+                           $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});//.tabs li
+                       }
+                   }
+               );//idTabs();
                $("#tbs-wants").tabs({
+                   width:"550px",
+                   height:"auto",
                    border:true,
                    fit:false,
                    onSelect:function(title){
@@ -243,11 +256,42 @@
           "haveFillStreet":"fillStreets",
           "haveFormShow":"addHaveForm"
         },
+        fillStreets:function(){
+
+            App.collections.streets.getStreetsInRayon($("#hh-"+this.cur_have_item+"-rayon_id").val()).done(function(result){
+                        console.log("getStreetsInRayon");
+                        //console.log(result);
+                        var select_items=App.collections.streets.getSelectOptions();
+//                var options_html="<option value=0>Select street...</option>";
+                        console.log(select_items);
+                        options_html="";
+                        for (item in select_items){
+                            options_html= options_html+"<option value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
+                        }
+                        console.log(options_html)
+                        console.log("this.cur_have_item="+App.main_view.cur_have_item)
+                        $("#hh-"+App.main_view.cur_have_item+"-street_id").html(options_html);
+                    }
+            );
+
+        },
         addHaveTab:function(){
-            $("#a-have-"+this.cur_have_item).removeClass("selected");
+           // $("#a-have-"+this.cur_have_item).removeClass("selected");
             this.last_have_item++;
-            $("#tbs-haves .simpleTabsNavigation").append('<li><a id="a-want-'+this.last_have_item+'" class="selected" href="#tbs-have-'+this.last_have_item+'">Обьект-'+this.last_have_item+'</a></li>');
-            $("#tbs-haves").append('<div style="display:none;" id="tbs-have-'+this.last_have_item+'" class="simpleTabsContent"></div>');
+            //$("#tbs-haves .simpleTabsNavigation").append('<li><a id="a-want-'+this.last_have_item+'" class="selected" href="#tbs-have-'+this.last_have_item+'">Обьект-'+this.last_have_item+'</a></li>');
+            //$("#tbs-haves").append('<div style="display:none;" id="tbs-have-'+this.last_have_item+'" class="simpleTabsContent"></div>');
+            var content_new_tab=this.addHaveForm();
+            $('#tbs-haves').tabs('add',{
+                title:'New Object',
+                content:content_new_tab,
+                closable:true,
+                tools:[{
+                    iconCls:'icon-mini-refresh',
+                    handler:function(){
+                        ///alert('refresh');
+                    }
+                }]
+            });
             this.addHaveForm();
             this.cur_have_item=this.last_have_item;
         },
@@ -259,37 +303,19 @@
             //$("#tbs-want-"+this.cur_want_item).hide();
             var content_new_tab="<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
             $('#tbs-wants').tabs('add',{
-                title:'New Tab',
-                content:content_new_tab,
+                title:'New Wishes',
+                content:'content_new_tab',
                 closable:true,
                 tools:[{
                     iconCls:'icon-mini-refresh',
                     handler:function(){
-                        alert('refresh');
+                        //alert('refresh');
                     }
                 }]
             });
             this.cur_want_item=this.want_have_item;
         },
-        fillStreets:function(){
 
-            App.collections.streets.getStreetsInRayon($("#hh-"+this.cur_have_item+"-rayon_id").val()).done(function(result){
-                console.log("getStreetsInRayon");
-                //console.log(result);
-                var select_items=App.collections.streets.getSelectOptions();
-//                var options_html="<option value=0>Select street...</option>";
-                console.log(select_items);
-                options_html="";
-                for (item in select_items){
-                    options_html= options_html+"<option value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
-                }
-                console.log(options_html)
-                console.log("this.cur_have_item="+App.main_view.cur_have_item)
-                $("#hh-"+App.main_view.cur_have_item+"-street_id").html(options_html);
-            }
-            );
-
-        },
         addHaveForm: function(){
             //----set Params----------------------
             App.Have_item_form.setN(this.cur_have_item);
@@ -303,13 +329,17 @@
             var have_item_html    = $(cur_have_form.render().el).html();
             var one_have_tpl_html= _.template( $("#one-have-tpl").html(), {n:1, have_item_html:have_item_html} );
             //----add to html--------------------
-            $("#tbs-have-"+this.cur_have_item).html(one_have_tpl_html);
+
+            //var tab = $('#tbs-haves').tabs('getSelected');  // get selected panel
+            //tab.panel.content=one_have_tpl_html;
+            //////////$("#tbs-have-"+this.cur_have_item).html(one_have_tpl_html);
             //----event set-----------------------
             $("#hh-"+this.cur_have_item+"-rayon_id").on("change",function(e){
                 App.main_view.fillStreets()
             });
             //--css correct-----------------------
             $(".bbf-field").css("margin","5px");
+            return one_have_tpl_html;
         },
         render: function(){
 
@@ -433,17 +463,22 @@
 </script>
 <!--  ******************************TEMPLATES  HAVES****************************** -->
 <script type="text/template" id="haves-tpl">
-
+ <div style="width:100%;height:100%">
   <input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">
-  <div id="tbs-haves"  class="usual">
-    <ul class="simpleTabsNavigation">
-        <li><a id="a-have-1" href="#tbs-have-1"  class="selected" >Обьект-1</a></li>
+  <!--<div id="tbs-haves"  class="usual">-->
+    <!--<ul class="simpleTabsNavigation">-->
+        <!--<li><a id="a-have-1" href="#tbs-have-1"  class="selected" >Обьект-1</a></li>-->
 
-    </ul>
-    <div id="tbs-have-1" class="simpleTabsContent">
+    <!--</ul>-->
+    <!--<div id="tbs-have-1" class="simpleTabsContent">-->
+       <!--{{one_have_tpl_html}}-->
+    <!--</div>-->
+ <!--</div>-->
+   <div id="tbs-haves"  class="easyui-tabs" >
+     <div title="My object" style="padding:10px;background-color:#FFFFDD" >
        {{one_have_tpl_html}}
-    </div>
-
+     </div>
+   </div>
  </div>
 </script>
 <!--  ******************************TEMPLATES  ONE-HAVES****************************** -->
@@ -458,22 +493,6 @@
 <script type="text/template" id="wants-tpl">
   <div>
   <input type="submit" value="Add ->" id="add_want" style="margin-left:35px;margin-bottom:10px">
-  <!--<div id="tbs-wants"  class="usual">-->
-    <!--<ul class="simpleTabsNavigation">-->
-        <!--<li><a id="a-want-1" href="#tbs-want-1"  class="selected" >Wish-1</a></li>-->
-        <!--<li><a href="#tbs-want-2">Wish-2</a></li>-->
-        <!--<li><a href="#tbs-want-3">Wish-3</a></li>-->
-     <!--</ul>-->
-    <!--<div id="tbs-want-1" class="simpleTabsContent">-->
-        <!--Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.-->
-    <!--</div>-->
-    <!--<div id="tbs-want-2" class="simpleTabsContent">-->
-        <!--<p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>-->
-    <!--</div>-->
-    <!--<div id="tbs-want-3" class="simpleTabsContent">-->
-        <!--<p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>-->
-    <!--</div>-->
-    <!--</div>-->
 
   <div id="tbs-wants" class="easyui-tabs" style="width:550px;height:auto" >
     <div title="About" style="padding:10px;background-color:#FFFFDD">
@@ -495,23 +514,12 @@
 
       </ul>
     </div>
-    <div title=">  Help  <" data-options="iconCls:'icon-help',closable:true" style="padding:30px">
+    <div title=">  Help  <" data-options="closable:true" style="padding:30px">
       This is the help content.
     </div>
 
   </div>
-  <!--<div id="tbs-wants" class="easyui-tabs" style="width:500px;height:250px;">-->
-    <!--<div title="Tab1" style="height:200px;padding:20px;display:none;">-->
-      <!--tab1-->
-    <!--</div>-->
-    <!--<div title="Tab2" data-options="closable:true" style="height:200px;overflow:auto;padding:20px;display:none;">-->
-      <!--tab2-->
-    <!--</div>-->
-    <!--<div title="Tab3" data-options="iconCls:'icon-reload',closable:true" style="height:200px;padding:20px;display:none;">-->
-      <!--tab3-->
-      <!--<p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>-->
-    <!--</div>-->
-  <!--</div>-->
+
   </div>
 </script>
 <!--  ******************************TEMPLATES  ONE-WANT****************************** -->
