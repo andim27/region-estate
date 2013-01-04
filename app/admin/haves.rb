@@ -11,12 +11,13 @@ ActiveAdmin.register Have do
 
 
   index :as=>:table do |tb|
+    selectable_column
     column "Have want",:sortable => :id do |rec|
 
        #" id="+rec.id.to_s+", "+rec.obj.name+", room:"+rec.room.to_s+" Rayon: "+Have.find(rec.id).rayon.name+" tel:"+rec.zayavka.tel_1
        #items=Zayavka.getHaveWant(rec.id)
        #if items.size >0
-       render :template=>"admin/obmen_view.html", :locals =>{:items=>(item=Zayavka.getHaveWant(rec.id))}
+       render :template=>"admin/obmen_view.html", :locals =>{:items=>Zayavka.getHaveWant(rec.id)}
        #end
     end
     #column "Want" do  |rec|

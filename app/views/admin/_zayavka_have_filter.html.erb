@@ -31,7 +31,7 @@
                     for (el in data) {
                         op_str+="<option value='"+data[el].id+"'>"+data[el].name+"</option>";
                     }
-                    $("#q_street_name").html(op_str)
+                    $("#q_streets_name").html(op_str)
                 },
                 "json"
         )
@@ -47,10 +47,11 @@
         rent_want  = $("#q_rent_want").attr("checked")
         price_from = $("#q_price_from").val();
         price_to   = $("#q_price_to").val();
+        dop_in     = $("#q_dop_have").val();
         if (rayon_id !=""){
            out_str="&rayon_id="+rayon_id
         }
-        if (street_id != undefined){
+        if (street_id != '0'){
             out_str="&street_id="+street_id
         }
         if (room !=""){
@@ -73,6 +74,9 @@
         }
         if (price_to !=0) {
             out_str+="&price_to="+price_to
+        }
+        if (dop_in !="") {
+            out_str+="&dop="+dop_in
         }
         return out_str
     }
@@ -97,7 +101,7 @@
 <br><br>
 <label class=" label" for="q_street_id">Street</label>
 <select id="q_streets_name" name="q_street_name" >
-  <option>Select rayon</option>
+  <option value=0 >Select rayon</option>
 </select><a style="display:block;float:right" href='javascript: fillStreets(document.getElementById("q_rayons_name"))' title="fillStreets"><<<</a>
 <br><br>
 <label class=" label" for="q_price_want_from">Price want</label>
@@ -112,7 +116,11 @@
   </tr>
 </table>
 
-
+<div class="filter_form_field filter_string">
+  <label class=" label" for="q_dop_have">Dop</label>
+  <input id="q_dop_have" type="text" name="q_dop_have">
+</div>
+<br><br>
 <div class="buttons">
   <input type="submit" value="Filter" name="commit" onclick="filterHaveUrl();" >
   <a class="clear_filters_btn" href="javascript:clearFilterHaveUrl();">Clear Filters</a>

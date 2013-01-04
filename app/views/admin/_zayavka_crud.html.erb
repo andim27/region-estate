@@ -1,0 +1,521 @@
+﻿
+<!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />-->
+<!--<script src="http://code.jquery.com/jquery-1.8.3.js"></script>-->
+<!--<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>-->
+
+<script>
+ $(function() {
+//        $( "#tbs" ).tabs({
+//            event: "mouseover",
+//            heightStyle: "fill"
+//        });
+//       $("#tbs").idTabs();
+    //------------------DEFINITIONS-----
+
+    window.App={action:"<%=@action %>",
+                models:{},
+                collections:{},
+                forms:{zayavka:{},have_arr:[],want_ar:[]},
+                baseUrl:"<%= request.env["HTTP_HOST"]; %>/"
+    };
+    //----------------------------ROUTER------------------------------------
+     App.Router = Backbone.Router.extend({
+         routes: {
+             "admin/zayavkas/new":       "zayavkaNewFun",    // #new
+             "admin/zayavkas/:id/edit":  "zayavkaEditFun",  // #update
+             "admin/zayavkas/:id":   "zayavkaShowFun"   // #show
+         },
+         zayavkaNewFun: function() {
+             App.action="new";
+             console.log("Router action="+ App.action);
+         },
+         zayavkaEditFun: function(query, id) {
+             App.action="edit";
+             App.zayavka_id=<%=@zayavka_id %>
+             console.log("Router action="+ App.action+" id="+App.zayavka_id+" q="+query);
+         },
+         zayavkaShowFun: function(query, id) {
+             App.action="show";
+             App.zayavka_id=id;
+             console.log("Router action="+ App.action+" id="+App.cur_id+" q="+query);
+         }
+     });
+    //----------------------------MODELS------------------------------------
+    App.Zayavka = Backbone.Model.extend({
+        urlRoot: App.baseUrl+"zayavka/",
+        initialize: function(){
+            this.zayavka_fields=eval('<%=@zayavka_fields; %>'.replace(/&quot;/g,'"'));
+
+//            console.log("SERVER_NAME="+"<%= request.env["SERVER_NAME"]; %>");
+//            console.log("REQUEST_URI="+"<%= request.env["REQUEST_URI"]; %>");
+//            console.log("HTTP_HOST="+"<%= request.env["HTTP_HOST"]; %>");
+        },
+        defaults: {
+            "id":  0,
+            "name":     "Р Р°РІРёРѕР»Рё",
+            "created_at":    "27.12.12",
+            "updated_at":    "28.12.12",
+            "tel_1": "098-???-??-??"
+        },
+
+        show: function (action){
+              console.log(action)
+
+               //---fill models data
+               App.main_view= new App.MainView();
+               App.main_view.addHaveForm();
+               //---generate templates
+               $("#tbs-haves").idTabs();
+               $("#tbs-wants").tabs({
+                   border:true,
+                   fit:false,
+                   onSelect:function(title){
+                       //alert(title+' is selected');
+                       $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});//.tabs li
+                   }});//idTabs();
+               //--css hack
+
+               //--add events
+               $("#add_have").click(function(){App.main_view.addHaveTab()});
+               $("#add_want").click(function(){App.main_view.addWantTab()});
+        }
+    });
+
+    App.Have = Backbone.Model.extend({
+        urlRoot: App.baseUrl+"haves/",
+        defaults: {
+            "obj_n":0,
+            "room":0,
+            "rayon_id":0,
+            "street_id":0
+        }
+    });
+    App.Want = Backbone.Model.extend({
+
+    });
+    //--------attributes models------------
+     App.Contact = Backbone.Model.extend({
+
+     });
+     App.InfoType = Backbone.Model.extend({
+
+    });
+    App.InfoSource = Backbone.Model.extend({
+        defaults: {
+            name: '',
+            info_url: '',
+            info_type: 0,
+            created_at:''
+        }
+    });
+
+    //----------collection---------------------------
+     Backbone.Collection.prototype.getSelectOptions=function(){
+         var options_arr=[{val:0,label:"select item..."}];
+         for (var i in this.models) {
+             options_arr.push({val:this.models[i].attributes.id,label:this.models[i].attributes.name})
+         }
+         return options_arr;
+     };
+     App.InfoSources = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"info_sources/",
+         model: App.InfoSource,
+         parse: function(response) {
+                 //console.log("RESP 0: "+response[0]);
+                return response;
+         },
+         initialize: function () {
+             this.bind("reset", function (model, options) {
+                 console.log("Inside event");
+                 console.log(model);
+
+                 });
+         }
+     });
+     App.Objs = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"objs/",
+     });
+     App.States = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"states/",
+     });
+     App.InfoTypes = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"info_types/",
+     });
+     App.Rayons = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"rayons/",
+     });
+     App.Streets = Backbone.Collection.extend({
+         rayon_id:0,
+         url:"http://"+App.baseUrl+"streets/inrayon/",
+         getStreetsInRayon:function(rayon_id){
+             this.rayon_id=rayon_id;
+             this.url=this.url+rayon_id;
+             var streets_list=this.fetch();
+             return streets_list;
+         }
+     });
+     App.Haves = Backbone.Collection.extend({
+           model: App.Have
+     });
+     App.Wants = Backbone.Collection.extend({
+        model: App.Want
+     });
+
+    //-----------------FORMS---------------------------------
+    App.zayavka_form = new Backbone.Form({
+        //fields: ['id','created_at','updated_at','name','tel_1'],
+        initialize: function(){
+           //this.schema=this.setFormSchema();
+        },
+
+        schema:(App.action=="new")?
+                {
+                    id:  'Number',
+                    name:       'Text',
+                    created_at: 'DateTime',
+                    updated_at: 'DateTime',
+                    tel_1: 'Text',
+                    tel_2: 'Text',
+                    dop: 'Text',
+                    info_type:      { type: 'Select', options: [] },
+                    info_source:    { type: 'Select', options:  [] },
+                    published: {type: 'Checkbox'}
+
+                }:(App.action=="show")?
+                {
+
+                }:(App.action=="update")?
+                {
+
+                }:{id:'Number',name:'Text'},
+        idPrefix:"z-",
+        model: App.models.zayavka
+    });//.render();
+     //---------------Have Item form-------------------------
+     //App.Have_item_form = Backbone.Form({
+     App.Have_item_form = {
+         //fields: ['obj','roomt','dop'],
+         setN:function (cur_n) {
+             this.idPrefix="hh-"+cur_n+"-";
+         },
+         idPrefix:"hh-",
+         model: App.models.haves,
+         schema:{
+             obj_id: { type: 'Select',options:["111","222"]},
+             room: 'Number',
+             state_id: { type: 'Select',options:[]},
+             rayon_id: { type: 'Select',options:[]},
+             street_id: {type: 'Select',options:[]},
+             orientir: 'Text',
+             house_n: 'Text',
+             year:'Number',
+             flat_n: 'Text',
+             floor: 'Number',
+             floor_house: 'Number',
+             s_all: 'Number',
+             s_live:'Number',
+             s_kux:'Number',
+             tel:'Text',
+             dop:'Text',
+             price_want:'Number',
+             price_estimate:'Number',
+            obmen_want:{type: 'Checkbox'},
+            sell_want: {type: 'Checkbox'},
+            rent_want: {type: 'Checkbox'}
+         }
+     };
+    //-----------------VIEWS----------------------------------
+    App.MainView = Backbone.View.extend({
+        id:'#zayavka-tpl',
+        cur_have_item:1,
+        cur_want_item:1,
+        last_have_item:1,
+        last_want_item:3,
+        initialize: function(){
+            //---change template tags
+           /// this.on("haveFormShow",this.addHaveForm,this);
+            _.templateSettings = {
+                interpolate : /\{\{([\s\S]+?)\}\}/g
+            };
+            this.render();
+        },
+        events: {
+          "haveFillStreet":"fillStreets",
+          "haveFormShow":"addHaveForm"
+        },
+        addHaveTab:function(){
+            $("#a-have-"+this.cur_have_item).removeClass("selected");
+            this.last_have_item++;
+            $("#tbs-haves .simpleTabsNavigation").append('<li><a id="a-want-'+this.last_have_item+'" class="selected" href="#tbs-have-'+this.last_have_item+'">Обьект-'+this.last_have_item+'</a></li>');
+            $("#tbs-haves").append('<div style="display:none;" id="tbs-have-'+this.last_have_item+'" class="simpleTabsContent"></div>');
+            this.addHaveForm();
+            this.cur_have_item=this.last_have_item;
+        },
+        addWantTab:function(){
+            //$("#li-want-"+this.cur_want_item).removeClass("active");
+            this.last_want_item++;
+            //$("#tbs-wants .etabs").append('<li class="tab active" id="li-want-'+this.last_want_item+'"><a id="a-want-'+this.last_want_item+'" class="active" href="#tbs-want-'+this.last_want_item+'">Wish-'+this.last_want_item+'</a></li>');
+            //$("#tbs-wants").append('<div  id="tbs-want-'+this.last_want_item+'" >Wish content</div>');
+            //$("#tbs-want-"+this.cur_want_item).hide();
+            var content_new_tab="<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
+            $('#tbs-wants').tabs('add',{
+                title:'New Tab',
+                content:content_new_tab,
+                closable:true,
+                tools:[{
+                    iconCls:'icon-mini-refresh',
+                    handler:function(){
+                        alert('refresh');
+                    }
+                }]
+            });
+            this.cur_want_item=this.want_have_item;
+        },
+        fillStreets:function(){
+
+            App.collections.streets.getStreetsInRayon($("#hh-"+this.cur_have_item+"-rayon_id").val()).done(function(result){
+                console.log("getStreetsInRayon");
+                //console.log(result);
+                var select_items=App.collections.streets.getSelectOptions();
+//                var options_html="<option value=0>Select street...</option>";
+                console.log(select_items);
+                options_html="";
+                for (item in select_items){
+                    options_html= options_html+"<option value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
+                }
+                console.log(options_html)
+                console.log("this.cur_have_item="+App.main_view.cur_have_item)
+                $("#hh-"+App.main_view.cur_have_item+"-street_id").html(options_html);
+            }
+            );
+
+        },
+        addHaveForm: function(){
+            //----set Params----------------------
+            App.Have_item_form.setN(this.cur_have_item);
+            App.forms.have_arr[this.cur_have_item-1] = new Backbone.Form(App.Have_item_form);
+
+            var cur_have_form = App.forms.have_arr[this.cur_have_item-1];
+            cur_have_form.schema.obj_id.options  =App.collections.objs.getSelectOptions();
+            cur_have_form.schema.state_id.options=App.collections.states.getSelectOptions();
+            cur_have_form.schema.rayon_id.options=App.collections.rayons.getSelectOptions();
+
+            var have_item_html    = $(cur_have_form.render().el).html();
+            var one_have_tpl_html= _.template( $("#one-have-tpl").html(), {n:1, have_item_html:have_item_html} );
+            //----add to html--------------------
+            $("#tbs-have-"+this.cur_have_item).html(one_have_tpl_html);
+            //----event set-----------------------
+            $("#hh-"+this.cur_have_item+"-rayon_id").on("change",function(e){
+                App.main_view.fillStreets()
+            });
+            //--css correct-----------------------
+            $(".bbf-field").css("margin","5px");
+        },
+        render: function(){
+
+                    App.zayavka_form.fields=App.models.zayavka.zayavka_fields;
+                    App.zayavka_form.schema.info_source.options=App.collections.infoSources.getSelectOptions();
+                    App.zayavka_form.schema.info_type.options=App.collections.infoTypes.getSelectOptions();
+
+
+
+
+                    //console.log("  App.zayavka_form.schema.info_source.options:")
+                    //console.log(App.zayavka_form.schema.info_source.options)
+
+                    var zayavka_item_html = $(App.zayavka_form.render().el).html(); //"<h2>Form's place</h2>"//
+
+
+
+                    var haves_tpl_html   = _.template( $("#haves-tpl").html(), {
+                                                one_have_tpl_html:""}
+                    );
+
+                    var wants_tpl_html   = _.template( $("#wants-tpl").html(), {} );
+
+                    var zayavka_tpl_html = _.template( $("#zayavka-tpl").html(), {
+                                                zayavka_item_html:zayavka_item_html,
+                                                haves_tpl_html:haves_tpl_html,
+                                                wants_tpl_html:wants_tpl_html}
+                    );
+                    //console.log("this.el="+this.el)
+
+
+                    $("#zayavka").html( zayavka_tpl_html );
+
+
+
+        }
+    });
+
+    //------------------MAIN------------
+    App.router = new App.Router();
+    Backbone.history.start({pushState: true,root:App.baseUrl});//Backbone.history.start({ pushState: true, root: app.root });
+     //--collections---
+    App.collections.infoSources=new  App.InfoSources();
+    App.collections.infoSources.reset(eval('<%=@info_sources; %>'.replace(/&quot;/g,'"')));
+//    App.collections.infoSources.fetch(
+//             {
+//                 success: function(response,xhr) {
+//                     console.log("infoSources Inside success");
+//                     console.log(response);
+//                     //App.models.zayavka.show(App.action);
+//                 },
+//                 error: function (errorResponse) {
+//                     console.error("infoSources "+errorResponse)
+//                 }
+//             }
+//    ).done(function(){console.log("DONE!!!")});
+    App.collections.infoTypes=new App.InfoTypes();
+    App.collections.infoTypes.reset(eval('<%=@info_types; %>'.replace(/&quot;/g,'"')));
+
+    App.collections.objs   = new App.Objs();
+    App.collections.states = new App.States();
+    App.collections.rayons = new App.Rayons();
+    App.collections.streets= new App.Streets();
+
+    App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
+    App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
+    App.collections.rayons.reset(eval('<%=@rayons; %>'.replace(/&quot;/g,'"')));
+
+
+
+    //console.log(App.collections.infoSources);
+
+    App.models.zayavka = new App.Zayavka();
+    App.models.haves   = new App.Haves();
+    App.models.wants   = new App.Wants();
+
+    App.models.zayavka.show(App.action);
+ });//---ready
+</script>
+
+<!--  ******************************TEMPLATES****************************** -->
+
+
+<script type="text/template" id="zayavka-tpl">
+ <div class="Columns">
+ <div class="panel">
+ <h3>Zayavka</h3>
+  <p>Set common attributes:</p>
+  <div style="width:50%">
+  {{zayavka_item_html}}
+  </div>
+</div>
+  <table width="98%">
+    <tr>
+      <td width="50%">
+        <div class="panel">
+          <h3>Haves</h3>
+          <p>Set what you have:</p>
+          {{haves_tpl_html}}
+        </div>
+      </td>
+      <td width="50%">
+        <div class="panel">
+          <h3>Wants</h3>
+          <p>Set what you want:</p>
+          {{wants_tpl_html}}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+
+  <fieldset class="actions">
+  <ol>
+    <input type="submit" value="Save zayavka" name="commit">
+    <a href="/admin/zayavkas">Cancel</a>
+    <button id="cancel" type="button"  class="ui-state-default ui-corner-all">Cancel</button>
+  </ol>
+</fieldset>
+ </div>
+</script>
+<!--  ******************************TEMPLATES  HAVES****************************** -->
+<script type="text/template" id="haves-tpl">
+
+  <input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">
+  <div id="tbs-haves"  class="usual">
+    <ul class="simpleTabsNavigation">
+        <li><a id="a-have-1" href="#tbs-have-1"  class="selected" >Обьект-1</a></li>
+
+    </ul>
+    <div id="tbs-have-1" class="simpleTabsContent">
+       {{one_have_tpl_html}}
+    </div>
+
+ </div>
+</script>
+<!--  ******************************TEMPLATES  ONE-HAVES****************************** -->
+<script type="text/template" id="one-have-tpl">
+<div id="have-item-{{n}}">
+  <label>Предложение:</label>
+  {{have_item_html}}
+  <input type="submit" value="Del (x)" id="delete-have_{{n}}">
+</div>
+</script>
+<!--  ******************************TEMPLATES WANTS****************************** -->
+<script type="text/template" id="wants-tpl">
+  <div>
+  <input type="submit" value="Add ->" id="add_want" style="margin-left:35px;margin-bottom:10px">
+  <!--<div id="tbs-wants"  class="usual">-->
+    <!--<ul class="simpleTabsNavigation">-->
+        <!--<li><a id="a-want-1" href="#tbs-want-1"  class="selected" >Wish-1</a></li>-->
+        <!--<li><a href="#tbs-want-2">Wish-2</a></li>-->
+        <!--<li><a href="#tbs-want-3">Wish-3</a></li>-->
+     <!--</ul>-->
+    <!--<div id="tbs-want-1" class="simpleTabsContent">-->
+        <!--Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.-->
+    <!--</div>-->
+    <!--<div id="tbs-want-2" class="simpleTabsContent">-->
+        <!--<p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>-->
+    <!--</div>-->
+    <!--<div id="tbs-want-3" class="simpleTabsContent">-->
+        <!--<p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>-->
+    <!--</div>-->
+    <!--</div>-->
+
+  <div id="tbs-wants" class="easyui-tabs" style="width:550px;height:auto" >
+    <div title="About" style="padding:10px;background-color:#FFFFDD">
+      <p style="font-size:14px">jQuery EasyUI framework help you build your web page easily.</p>
+      <ul>
+        <li>easyui is a collection of user-interface plugin based on jQuery.</li>
+        <li>easyui provides essential functionality for building modem, interactive, javascript applications.</li>
+        <li>using easyui you don't need to write many javascript code, you usually defines user-interface by writing some HTML markup.</li>
+        <li>complete framework for HTML5 web page.</li>
+        <li>easyui save your time and scales while developing your products.</li>
+        <li>easyui is very easy but powerful.</li>
+      </ul>
+    </div>
+    <div title="My Documents" style="padding:10px;background-color:#FFFFDD" >
+      <ul>
+        <li>easyui is a collection of user-interface plugin based on jQuery.</li>
+        <li>easyui provides essential functionality for building modem, interactive, javascript applications.</li>
+        <li>using easyui you don't need to write many javascript code, you usually defines user-interface by writing some HTML markup.</li>
+
+      </ul>
+    </div>
+    <div title=">  Help  <" data-options="iconCls:'icon-help',closable:true" style="padding:30px">
+      This is the help content.
+    </div>
+
+  </div>
+  <!--<div id="tbs-wants" class="easyui-tabs" style="width:500px;height:250px;">-->
+    <!--<div title="Tab1" style="height:200px;padding:20px;display:none;">-->
+      <!--tab1-->
+    <!--</div>-->
+    <!--<div title="Tab2" data-options="closable:true" style="height:200px;overflow:auto;padding:20px;display:none;">-->
+      <!--tab2-->
+    <!--</div>-->
+    <!--<div title="Tab3" data-options="iconCls:'icon-reload',closable:true" style="height:200px;padding:20px;display:none;">-->
+      <!--tab3-->
+      <!--<p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>-->
+    <!--</div>-->
+  <!--</div>-->
+  </div>
+</script>
+<!--  ******************************TEMPLATES  ONE-WANT****************************** -->
+<script type="text/template" id="one-want-tpl">
+</script>
+<!--  ******************************HTML*********************************** -->
+<div id="zayavka"></div>

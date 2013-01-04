@@ -4,6 +4,13 @@ Estate::Application.routes.draw do
   devise_for :admin_users, ActiveAdmin::Devise.config
 
   resources :streets
+  resources :info_sources
+  resources :info_types
+  resources :rayons
+  resources :haves
+  resources :wants
+
+  match 'streets/inrayon/:id' => 'streets#inrayon'
   #match 'admin/rayons_geo/:action' => 'admin/rayons_geo', :action => /w+/
 
   match 'admin/rayons_geo/create_poly' => 'admin/rayons_geo#create_poly'
@@ -15,6 +22,8 @@ Estate::Application.routes.draw do
   match 'admin/rayons_geo/load_rayons_poly' => 'admin/rayons_geo#load_rayons_poly'
   match 'admin/get_geo_streets/get_streets' => 'admin/get_geo_streets#get_streets'
   match 'admin/get_geo_streets/save_streets' => 'admin/get_geo_streets#save_streets'
+
+  ##match 'admin/streets/:id/rayonname' =>'admin/streets#index'
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

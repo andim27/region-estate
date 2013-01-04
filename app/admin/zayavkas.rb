@@ -1,5 +1,6 @@
 ActiveAdmin.register Zayavka do
   config.sort_order = "id_asc"
+  ##config.register_stylesheet 'simpletabs.css'
   menu :parent => "Zayavki", :label => "Zayavki all"
   scope :all, :default => true
   scope :today do |z|
@@ -32,29 +33,45 @@ ActiveAdmin.register Zayavka do
   ##filter :info_source, :label=>"Agency",:collection=>proc {InfoSource.from_agency}
   ##filter :info_source, :label=>"Peaple",:collection=>proc {InfoSource.from_people}
   #filter :obj_id,:collection => proc { Obj.all },:as=>:select
-  sidebar :filters_Have do
+  sidebar :filters_Have, :if=>proc{request.url.match(/zayavkas$|filterhave/)} do
     render :template=>'admin/_zayavka_have_filter.html'
   end
-  #------------------------------------------CONTROLLER-------------------
-  controller do
-    #def index
-    #  if params[:filterhave].present?
-    #    if params[:rayon_id].present?
-    #      rayon_id_str=" h.rayon_id=#{params[:rayon_id]}"
-    #    else
-    #      rayon_id_str=" 1=1"
-    #    end
-    #    Zayavka.select("zayavkas.*").from("zayavkas").where(" zayavkas.id IN (SELECT h.zayavka_id FROM haves as h WHERE #{rayon_id_str})").order("id asc")
-    #  else
-    #    Zayavka.order("id asc").all
-    #  end
-    #   index! do |format|
-    #    Zayavka.select("zayavkas.*").from("zayavkas").where(" zayavkas.id IN (SELECT h.zayavka_id FROM haves as h WHERE h.rayon_id=3143)")
-    # @zayavkas = Zayavka.select("zayavkas.*").from("zayavkas").where(" zayavkas.id IN (SELECT h.zayavka_id FROM haves as h WHERE h.rayon_id=3143)")
 
-    #     format.html
-    #   end
-    #end
+  ##------------------------------------------CONTROLLER-------------------
+
+
+  controller do
+
+    def edit(options={}, &block)
+      @zayavka_id=params[:id]
+      render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
+      #super do |format|
+      #  block.call(format) if block
+      #  #format.html { render active_admin_template('edit') }
+      #  @cur_id=params[:id]
+      #  #format.html {  render :text=>"Edit member #{params[:id]}"}
+      #  format.html {render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"}
+      #end
+    end
+    def new
+        @action="new"
+        ##ActiveRecord::Base.include_root_in_json = false
+        @zayavka_fields=Zayavka.column_names;
+        @info_sources=InfoSource.select("id,name").all.to_json
+        @info_types=InfoType.select("id,name").all.to_json
+        @objs=Obj.select("id,name").all.to_json
+        @states=State.select("id,name").all.to_json
+        @rayons=Rayon.select("id,name").where("parent=2775").to_json
+        render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
+    end
+    def show
+      @action="show"
+      @zayavka_id=params[:id]
+      ##ActiveRecord::Base.include_root_in_json = false
+      @zayavka_fields=Zayavka.column_names;
+      render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
+    end
+
     def scoped_collection
      if params[:filterhave].present?
        cond_str=" 1=1 "
@@ -105,16 +122,26 @@ ActiveAdmin.register Zayavka do
        else
          price_to_str=""
        end
-       cond_str=cond_str+obmen_want_str+sell_want_str+rent_want_str+obj_id_str+rayon_id_str+street_id_str+room_str+price_from_str+price_to_str
+       if params[:dop].present?
+         dop_str=" AND h.dop LIKE ('%#{params[:dop]}%')"
+       else
+         dop_str=""
+       end
+       cond_str=cond_str+obmen_want_str+sell_want_str+rent_want_str+obj_id_str+rayon_id_str+street_id_str+room_str+price_from_str+price_to_str+dop_str
        Zayavka.select("zayavkas.*").from("zayavkas").where(" zayavkas.id IN (SELECT h.zayavka_id FROM haves as h WHERE #{cond_str})").order("id asc")
      else
       Zayavka.order("id asc").select("*")
      end
    end
-    def edit
-      h1 "Edit "+params[:id]
-    end
+
   end
+
+  #member_action :editmy, :method => :put do
+  #
+  #  redirect_to :action => :editmy
+  #  render :text=>"Edit member #{params[:id]}"
+  #
+  #end
 
   #-------------------------------------------TABLE----------------------
   index :as=>:table do

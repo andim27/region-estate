@@ -199,7 +199,7 @@ function fillRayonsStreets() {
                  poly= mypolygons[key_rayon_id];
                  lat=streets_list[i].center_lat;
                  lng=streets_list[i].center_lng;
-                 console.log("fillRayonsStreets i="+i+" lat="+lat+" lng="+lng+" key_rayon_id="+key_rayon_id+" "+streets_list[i].name_rus);
+                 //console.log("fillRayonsStreets i="+i+" lat="+lat+" lng="+lng+" key_rayon_id="+key_rayon_id+" "+streets_list[i].name_rus);
                 try {
                     if (poly.geometry.contains([lat,lng]) == true) {//--street in rayon
                         console.info("FOUNDED!!! in "+key_rayon_id)
@@ -211,15 +211,16 @@ function fillRayonsStreets() {
             }
     }
 
-    console.log("fillRayonsStreets ...")
+    //console.log("fillRayonsStreets ...")
     console.table(streets_list)
     save_streets();
 }
 function load_streets() {
-    if (start_cur>20) {
+    if (start_cur>2570) {
         console.log("DONE: "+start_cur);
         return;
     }
+
     console.info("LOAD STREETS...start_cur="+start_cur)
     $.post(
         "rayons_geo/load_streets",
@@ -227,19 +228,24 @@ function load_streets() {
         function (data){
 
             streets_list=data
-            console.log("Loaded..."+streets_list.length)
+           // console.log("Loaded..."+streets_list.length)
             streets_work_html=""
             for (var i=0;i < streets_list.length;i++){
                 streets_work_html+="<ul>"+streets_list[i].name_rus+"</ul>"
                 streets_list[i].rayons_id=[];
             }
             $("#streets_in_work").html(streets_work_html)
+            $("#start_txt").val(start_cur)
             fillRayonsStreets();
         }
     )
 }
 function save_streets(){
     console.info("SAVE STREETS...start_cur="+start_cur)
+    if (streets_list.length <=0){
+        console.info("DONE!");
+        return;
+    }
     $.post(
         "rayons_geo/save_streets",
         {items:streets_list},
