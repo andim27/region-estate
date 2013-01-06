@@ -1,0 +1,216 @@
+// SASS variable overrides must be declared before loading up Active Admin's styles.
+//
+// To view the variables that Active Admin provides, take a look at
+// `app/assets/stylesheets/active_admin/mixins/_variables.css.scss` in the
+// Active Admin source.
+//
+// For example, to change the sidebar width:
+// $sidebar-width: 242px;
+
+// Active Admin's got SASS!
+@import "active_admin/mixins";
+@import "active_admin/base";
+
+// Overriding any non-variable SASS must be done after the fact.
+// For example, to change the default status-tag color:
+//
+   body.active_admin {
+      .status_tag { background: #6090DB; }
+   }
+//
+// Notice that Active Admin CSS rules are nested within a
+// 'body.active_admin' selector to prevent conflicts with
+// other pages in the app. It is best to wrap your changes in a 
+// namespace so they are properly recognized. You have options
+// if you e.g. want different styles for different namespaces:
+//
+// .active_admin       applies to any Active Admin namespace
+// .admin_namespace    applies to the admin namespace (eg: /admin)
+// .other_namespace    applies to a custom namespace named other (eg: /other)
+
+
+//@import "foundation";
+
+
+//require jquery.ui.all.css
+
+//@import "http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css"
+// require jquery.ui.core
+// require jquery.ui.theme
+
+// require simpletabs
+
+//= require themes/default/easyui
+//= require themes/icon
+
+////-----------my hacks-----
+$color_tab_fon:#FFFFDD;
+.fon-yellow {
+  background-color:#FFFFDD;
+}
+
+.tabs-wrap .tabs {
+  margin: 0 1.5em 0em 0;
+}
+.tabs li.tabs-selected a.tabs-inner {
+  background-color: $color_tab_fon;
+}
+.have-item {
+  background-color:$color_tab_fon;
+}
+.want-item {
+  background-color:$color_tab_fon;
+}
+//-----------bb-form------
+/* Form */
+.bbf-form {
+  margin: 0;
+  padding: 5px;
+  border: none;
+}
+
+
+/* Field */
+.bbf-field {
+  width:95%;
+  margin: 2em;
+  padding: 5px;
+  list-style-type: none;
+  position: relative;
+clear: both;
+
+}
+
+.bbf-field label {
+  float: left;
+  width: 25%;
+}
+
+.bbf-field .bbf-editor {
+  margin-left: 25%;
+  width: 74%;
+}
+
+.bbf-field input, .bbf-field textarea, .bbf-field select {
+  width: 100%;
+}
+
+.bbf-field .bbf-help {
+  margin-left: 25%;
+  width: 74%;
+  color: #999;
+}
+
+.bbf-field .bbf-error {
+  margin-left: 25%;
+  width: 74%;
+  color: red;
+}
+
+.bbf-field.bbf-error .bbf-editor {
+  outline: 1px solid red;
+}
+
+
+/* Radio */
+.bbf-radio {
+  list-style-type: none;
+}
+
+.bbf-radio input {
+  width: auto;
+}
+
+.bbf-radio label {
+  float: none;
+}
+
+
+/* Checkboxes */
+.bbf-checkboxes {
+  list-style-type: none;
+}
+
+.bbf-checkboxes input {
+  width: auto;
+}
+
+.bbf-checkboxes label {
+  float: none;
+}
+
+
+/* List */
+.bbf-list ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bbf-list .bbf-error {
+  border: 1px solid red;
+}
+
+.bbf-list li {
+  clear: both;
+  width: 100%;
+}
+
+.bbf-list li .bbf-editor-container {
+  margin-right: 2em;
+}
+
+.bbf-list li .bbf-remove {
+  float: right;
+  width: 2em;
+}
+
+.bbf-list .bbf-actions {
+  text-align: center;
+  clear: both;
+}
+
+/* List.Modal */
+.bbf-list-modal {
+  cursor: pointer;
+  border: 1px solid #ccc;
+  width: 208px;
+  border-radius: 3px;
+  padding: 4px;
+  color: #555;
+}
+
+
+
+/* Date */
+.bbf-date .bbf-date {
+  width: 4em;
+}
+
+.bbf-date .bbf-month {
+  width: 9em;
+}
+
+.bbf-date .bbf-year {
+  width: 6em;
+}
+
+
+/* DateTime */
+.bbf-datetime .bbf-date-container {
+  float: left;
+  margin-right: 1em;
+}
+
+.bbf-datetime select {
+  width: 4em;
+}
+/* ----my BB-form--------- */
+.bbf-field.field-obj_id {width:50%;float: left;}
+.bbf-field.field-room {width:30%;float:left}
+.bbf-field.field-obmen_want {display:inline;width:30%;float:left;}
+.bbf-field.field-sell_want {display:inline;width:30%;float:left;}
+.bbf-field.field-rent_want {display:inline;width:30%;float:left;}
+
+
+
