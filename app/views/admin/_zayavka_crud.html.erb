@@ -71,9 +71,18 @@
                        height:"auto",
                        border:true,
                        fit:false,
-                       onSelect:function(title){
+                       onBeforeClose: function(title,index){
+                           return confirm('Are you sure you want to close ' + title+" tab n="+index+" ?");
+                       },
+                       onAdd:function(title,index){
+                           console.log("onAdd "+index)
+                           App.main_view.initHaveEvents(index);
+
+                       },
+                       onSelect:function(title,index){
                            //alert(title+' is selected');
                            $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});//.tabs li
+                           App.main_view.cur_have_item = index;//App.main_view.getHaveTabIndex();
                        }
                    }
                );//idTabs();
@@ -82,11 +91,18 @@
                    height:"auto",
                    border:true,
                    fit:false,
+
                    onSelect:function(title){
                        //alert(title+' is selected');
                        $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});//.tabs li
                    }});//idTabs();
+               //--init data TABS
+               $("#tbs-haves").tabs("getTab",0).html(App.main_view.addHaveForm());
+               $("#tbs-wants").tabs("getTab",0).html("УРРА !!")
+               App.main_view.initHaveEvents(0);
+               App.main_view.initWantEvents(0);
                //--css hack
+                $(".tabs-panels .panel").css({'margin-bottom':"1px"});
 
                //--add events
                $("#add_have").click(function(){App.main_view.addHaveTab()});
@@ -159,10 +175,13 @@
      });
      App.Streets = Backbone.Collection.extend({
          rayon_id:0,
+         //urlMain:"http://"+App.baseUrl+"streets/inrayon/",
          url:"http://"+App.baseUrl+"streets/inrayon/",
          getStreetsInRayon:function(rayon_id){
+
              this.rayon_id=rayon_id;
-             this.url=this.url+rayon_id;
+             this.url="http://"+App.baseUrl+"streets/inrayon/" + String(this.rayon_id)
+             console.log("this.url="+this.url+" this.rayon_id="+this.rayon_id)
              var streets_list=this.fetch();
              return streets_list;
          }
@@ -240,10 +259,10 @@
     //-----------------VIEWS----------------------------------
     App.MainView = Backbone.View.extend({
         id:'#zayavka-tpl',
-        cur_have_item:1,
-        cur_want_item:1,
-        last_have_item:1,
-        last_want_item:3,
+        cur_have_item:0,
+        cur_want_item:0,
+        last_have_item:0,
+        last_want_item:0,
         initialize: function(){
             //---change template tags
            /// this.on("haveFormShow",this.addHaveForm,this);
@@ -256,65 +275,55 @@
           "haveFillStreet":"fillStreets",
           "haveFormShow":"addHaveForm"
         },
-        fillStreets:function(){
+        getHaveTabIndex:function () {
+            var tab = $('#tbs-haves').tabs('getSelected');
+            var index = $('#tbs-haves').tabs('getTabIndex',tab);
+            return (index);
+        },
+        initHaveEvents:function (index) {
+            //----event set-----------------------
+            $("#hh-"+index+"-rayon_id").on("change",function(e){
+                App.main_view.fillStreets()
+            });
+            //--css correct-----------------------
+            $(".bbf-field").css("margin","5px");
+        },
+        initWantEvents:function (index) {
 
-            App.collections.streets.getStreetsInRayon($("#hh-"+this.cur_have_item+"-rayon_id").val()).done(function(result){
+        },
+        fillStreets:function(){
+            var cur_have_item=this.getHaveTabIndex();
+            App.collections.streets.getStreetsInRayon($("#hh-"+cur_have_item+"-rayon_id").val()).done(function(result){
                         console.log("getStreetsInRayon");
                         //console.log(result);
                         var select_items=App.collections.streets.getSelectOptions();
-//                var options_html="<option value=0>Select street...</option>";
                         console.log(select_items);
                         options_html="";
                         for (item in select_items){
                             options_html= options_html+"<option value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
                         }
                         console.log(options_html)
-                        console.log("this.cur_have_item="+App.main_view.cur_have_item)
-                        $("#hh-"+App.main_view.cur_have_item+"-street_id").html(options_html);
+                        console.log("cur_have_item="+cur_have_item)
+                        $("#hh-"+cur_have_item+"-street_id").html(options_html);
                     }
             );
 
         },
         addHaveTab:function(){
-           // $("#a-have-"+this.cur_have_item).removeClass("selected");
+
             this.last_have_item++;
-            //$("#tbs-haves .simpleTabsNavigation").append('<li><a id="a-want-'+this.last_have_item+'" class="selected" href="#tbs-have-'+this.last_have_item+'">Обьект-'+this.last_have_item+'</a></li>');
-            //$("#tbs-haves").append('<div style="display:none;" id="tbs-have-'+this.last_have_item+'" class="simpleTabsContent"></div>');
+            this.cur_have_item=this.last_have_item;
             var content_new_tab=this.addHaveForm();
             $('#tbs-haves').tabs('add',{
                 title:'New Object',
                 content:content_new_tab,
-                closable:true,
-                tools:[{
-                    iconCls:'icon-mini-refresh',
-                    handler:function(){
-                        ///alert('refresh');
-                    }
-                }]
+                closable:true
+
             });
-            this.addHaveForm();
-            this.cur_have_item=this.last_have_item;
+
+
         },
-        addWantTab:function(){
-            //$("#li-want-"+this.cur_want_item).removeClass("active");
-            this.last_want_item++;
-            //$("#tbs-wants .etabs").append('<li class="tab active" id="li-want-'+this.last_want_item+'"><a id="a-want-'+this.last_want_item+'" class="active" href="#tbs-want-'+this.last_want_item+'">Wish-'+this.last_want_item+'</a></li>');
-            //$("#tbs-wants").append('<div  id="tbs-want-'+this.last_want_item+'" >Wish content</div>');
-            //$("#tbs-want-"+this.cur_want_item).hide();
-            var content_new_tab="<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
-            $('#tbs-wants').tabs('add',{
-                title:'New Wishes',
-                content:'content_new_tab',
-                closable:true,
-                tools:[{
-                    iconCls:'icon-mini-refresh',
-                    handler:function(){
-                        //alert('refresh');
-                    }
-                }]
-            });
-            this.cur_want_item=this.want_have_item;
-        },
+
 
         addHaveForm: function(){
             //----set Params----------------------
@@ -329,17 +338,26 @@
             var have_item_html    = $(cur_have_form.render().el).html();
             var one_have_tpl_html= _.template( $("#one-have-tpl").html(), {n:1, have_item_html:have_item_html} );
             //----add to html--------------------
-
             //var tab = $('#tbs-haves').tabs('getSelected');  // get selected panel
             //tab.panel.content=one_have_tpl_html;
-            //////////$("#tbs-have-"+this.cur_have_item).html(one_have_tpl_html);
-            //----event set-----------------------
-            $("#hh-"+this.cur_have_item+"-rayon_id").on("change",function(e){
-                App.main_view.fillStreets()
-            });
-            //--css correct-----------------------
-            $(".bbf-field").css("margin","5px");
             return one_have_tpl_html;
+        },
+        addWantTab:function(){
+            //$("#li-want-"+this.cur_want_item).removeClass("active");
+            this.last_want_item++;
+            var content_new_tab="<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
+            $('#tbs-wants').tabs('add',{
+                title:'New Wishes',
+                content:'content_new_tab',
+                closable:true,
+                tools:[{
+                    iconCls:'icon-mini-refresh',
+                    handler:function(){
+                        //alert('refresh');
+                    }
+                }]
+            });
+            this.cur_want_item=this.want_have_item;
         },
         render: function(){
 
@@ -465,15 +483,6 @@
 <script type="text/template" id="haves-tpl">
  <div style="width:100%;height:100%">
   <input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">
-  <!--<div id="tbs-haves"  class="usual">-->
-    <!--<ul class="simpleTabsNavigation">-->
-        <!--<li><a id="a-have-1" href="#tbs-have-1"  class="selected" >Обьект-1</a></li>-->
-
-    <!--</ul>-->
-    <!--<div id="tbs-have-1" class="simpleTabsContent">-->
-       <!--{{one_have_tpl_html}}-->
-    <!--</div>-->
- <!--</div>-->
    <div id="tbs-haves"  class="easyui-tabs" >
      <div title="My object" style="padding:10px;background-color:#FFFFDD" >
        {{one_have_tpl_html}}
@@ -483,7 +492,7 @@
 </script>
 <!--  ******************************TEMPLATES  ONE-HAVES****************************** -->
 <script type="text/template" id="one-have-tpl">
-<div id="have-item-{{n}}">
+<div id="have-item-{{n}}" class="have-item">
   <label>Предложение:</label>
   {{have_item_html}}
   <input type="submit" value="Del (x)" id="delete-have_{{n}}">
@@ -524,6 +533,8 @@
 </script>
 <!--  ******************************TEMPLATES  ONE-WANT****************************** -->
 <script type="text/template" id="one-want-tpl">
+  <div id="want-item-{{n}}" class="want-item">
+  </div>
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
