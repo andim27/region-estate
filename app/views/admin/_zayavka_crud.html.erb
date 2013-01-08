@@ -328,9 +328,9 @@
         addHaveForm: function(){
             //----set Params----------------------
             App.Have_item_form.setN(this.cur_have_item);
-            App.forms.have_arr[this.cur_have_item-1] = new Backbone.Form(App.Have_item_form);
+            App.forms.have_arr[this.cur_have_item] = new Backbone.Form(App.Have_item_form);
 
-            var cur_have_form = App.forms.have_arr[this.cur_have_item-1];
+            var cur_have_form = App.forms.have_arr[this.cur_have_item];
             cur_have_form.schema.obj_id.options  =App.collections.objs.getSelectOptions();
             cur_have_form.schema.state_id.options=App.collections.states.getSelectOptions();
             cur_have_form.schema.rayon_id.options=App.collections.rayons.getSelectOptions();
