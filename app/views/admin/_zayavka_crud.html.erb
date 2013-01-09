@@ -51,11 +51,16 @@
 //            console.log("HTTP_HOST="+"<%= request.env["HTTP_HOST"]; %>");
         },
         defaults: {
-            "id":  0,
-            "name":     "Р Р°РІРёРѕР»Рё",
-            "created_at":    "27.12.12",
-            "updated_at":    "28.12.12",
-            "tel_1": "098-???-??-??"
+            id:  111,
+            name:       'Text',
+            created_at: 'DateTime',
+            updated_at: 'DateTime',
+            tel_1: 'Text',
+            tel_2: 'Text',
+            dop: 'Text',
+            info_type:     0,
+            info_source:   0,
+            published:1
         },
 
         show: function (action){
@@ -71,6 +76,25 @@
                        height:"auto",
                        border:true,
                        fit:false,
+                       tools:[{
+                           iconCls:'icon-add',
+                           handler:function(){
+                               App.main_view.addHaveTab();
+                           }
+                       },
+                       {
+                           iconCls:'icon-save',
+                           handler:function(){
+                               confirm('save?')
+                           }
+                       },
+                       {
+                           iconCls:'icon-remove',
+                           handler:function(){
+                               confirm('remove?')
+                           }
+                       }
+                       ],
                        onBeforeClose: function(title,index){
                            return confirm('Are you sure you want to close ' + title+" tab n="+index+" ?");
                        },
@@ -91,14 +115,37 @@
                    height:"auto",
                    border:true,
                    fit:false,
+                   tools:[{
+                       iconCls:'icon-add',
+                       handler:function(){
+                           App.main_view.addWantTab();
+                       }
+                   },
+                       {
+                           iconCls:'icon-save',
+                           handler:function(){
+                               confirm('save?')
+                           }
+                       },
+                       {
+                           iconCls:'icon-remove',
+                           handler:function(){
+                               confirm('remove?')
+                           }
+                       }
+                   ],
+                   onAdd:function(title,index){
+                       console.log("onAdd want "+index)
+                       App.main_view.initWantEvents(index);
 
-                   onSelect:function(title){
-                       //alert(title+' is selected');
-                       $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});//.tabs li
-                   }});//idTabs();
+                   },
+                   onSelect:function(title,index){
+                       $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});
+                       App.main_view.cur_want_item = index;
+                   }})
                //--init data TABS
                $("#tbs-haves").tabs("getTab",0).html(App.main_view.addHaveForm());
-               $("#tbs-wants").tabs("getTab",0).html("УРРА !!")
+               $("#tbs-wants").tabs("getTab",0).html(App.main_view.addWantForm())
                App.main_view.initHaveEvents(0);
                App.main_view.initWantEvents(0);
                //--css hack
@@ -221,7 +268,7 @@
 
                 }:{id:'Number',name:'Text'},
         idPrefix:"z-",
-        model: App.models.zayavka
+        model:  App.models.zayavka
     });//.render();
      //---------------Have Item form-------------------------
      //App.Have_item_form = Backbone.Form({
@@ -233,31 +280,67 @@
          idPrefix:"hh-",
          model: App.models.haves,
          schema:{
-             obj_id: { type: 'Select',options:["111","222"]},
-             room: 'Number',
-             state_id: { type: 'Select',options:[]},
-             rayon_id: { type: 'Select',options:[]},
-             street_id: {type: 'Select',options:[]},
-             orientir: 'Text',
-             house_n: 'Text',
-             year:'Number',
-             flat_n: 'Text',
-             floor: 'Number',
-             floor_house: 'Number',
-             s_all: 'Number',
-             s_live:'Number',
-             s_kux:'Number',
-             tel:'Text',
-             dop:'Text',
-             price_want:'Number',
-             price_estimate:'Number',
-            obmen_want:{type: 'Checkbox'},
-            sell_want: {type: 'Checkbox'},
-            rent_want: {type: 'Checkbox'}
+             obj_id: { type: 'Select',options:["111","222"],template:'field'},
+             room: {type:'Number',template:'field'},
+             price_estimate: {type:'Number',template:'field'},
+             price_want:{type:'Number',template:'field_br'},
+             state_id:  {type:'Select',options:[],template:'field_clear'},
+
+             rayon_id: {type: 'Select',options:[],template:'field'},
+             street_id:{type: 'Select',options:[],template:'field_br'},
+             house_n: {type: 'Text',template:'field'},
+             flat_n:  {type: 'Text',template:'field'},
+
+             orientir: {type: 'Text',template:'field_clear'},
+
+             year: {type:'Number',template:'field'},
+             floor:{type:'Number',template:'field'},
+             floor_house:  {type:'Number',template:'field_br'},
+
+             s_all: {type: 'Number',template:'field'},
+             s_live:{type: 'Number',template:'field'},
+             s_kux :{type: 'Number',template:'field_br'},
+
+             tel:{type:'Text',template:'field_br'},
+             dop:{type:'Text',template:'field_br'},
+
+
+            obmen_want:{type: 'Checkbox',template:'field'},
+            sell_want: {type: 'Checkbox',template:'field'},
+            rent_want: {type: 'Checkbox',template:'field_br'}
          }
      };
     //-----------------VIEWS----------------------------------
-    App.MainView = Backbone.View.extend({
+
+     App.templates = {
+         //field is the default template used
+         field: '\
+            <div style="float:left;margin: 5px;"  >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}</div> <div>{{help}}</div>\
+            </div>\
+          ',
+         //Specify an alternate field template
+         fieldPrice: '\
+            <div  style="width:10%;float:left;margin:5px;" >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}</div> <div>{{help}}</div>\
+            </div>\
+          ',
+         field_br: '\
+            <div style="float:left;margin:5px;display:block;"  >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}</div> <div>{{help}}</div>\
+            </div>\
+          ',
+         field_clear: '\
+            <div style="float:left;margin:5px;clear:both;"  >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}</div> <div>{{help}}</div>\
+            </div><div class="clear"></div>\
+          ',
+     };
+     App.MainView = Backbone.View.extend({
         id:'#zayavka-tpl',
         cur_have_item:0,
         cur_want_item:0,
@@ -275,6 +358,9 @@
           "haveFillStreet":"fillStreets",
           "haveFormShow":"addHaveForm"
         },
+        setHaveTabTitle:function(index){
+
+        },
         getHaveTabIndex:function () {
             var tab = $('#tbs-haves').tabs('getSelected');
             var index = $('#tbs-haves').tabs('getTabIndex',tab);
@@ -282,15 +368,49 @@
         },
         initHaveEvents:function (index) {
             //----event set-----------------------
+           console.log("initHaveEvents index="+index)
             $("#hh-"+index+"-rayon_id").on("change",function(e){
-                App.main_view.fillStreets()
+                var tab = $('#tbs-haves').tabs('getSelected');
+                App.main_view.fillStreets();
             });
-            //--css correct-----------------------
-            $(".bbf-field").css("margin","5px");
-        },
-        initWantEvents:function (index) {
+            $("#hh-"+index+"-obj_id").on("change",function(e){
+
+                var tab = $('#tbs-haves').tabs('getSelected');
+                var new_title=this.options[this.selectedIndex].text;
+                console.log(new_title);
+                $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
+//                $('#tbs-haves').tabs('update', {tab: tab,
+//                    options: {
+//                        title: new_title,
+//
+//                    }
+//                });
+//                App.main_view.correctHaveCSS(index);
+            });
+            App.main_view.correctHaveCSS(index);
 
         },
+        correctHaveCSS:function(index){
+             //--UI style-------------------------
+            $("#hh-"+index+"-room").attr("size",2).css({"font-size":"lage","width":"80px"});
+            $("#hh-"+index+"-room").numberspinner({
+                min: 1,
+                max: 100,
+                editable: true
+            });
+
+             //--css correct-----------------------
+             $("#hh-"+index+"-price_estimate").attr("size",8).css("color","red");
+             $("#hh-"+index+"-price_want").attr("size",8).css("color","green");
+             $("#hh-"+index+"-house_n").attr("size",8);
+             $("#hh-"+index+"-flat_n").attr("size",8);
+
+             $("#hh-"+index+"-orientir").attr("size",75);
+             $("#hh-"+index+"-dop").attr("size",75);
+             $("#hh-"+index+"-tel").attr("size",75);
+             $(".bbf-field").css("margin","5px");
+         },
+
         fillStreets:function(){
             var cur_have_item=this.getHaveTabIndex();
             App.collections.streets.getStreetsInRayon($("#hh-"+cur_have_item+"-rayon_id").val()).done(function(result){
@@ -317,7 +437,7 @@
             $('#tbs-haves').tabs('add',{
                 title:'New Object',
                 content:content_new_tab,
-                closable:true
+                closable:false
 
             });
 
@@ -329,6 +449,8 @@
             //----set Params----------------------
             App.Have_item_form.setN(this.cur_have_item);
             App.forms.have_arr[this.cur_have_item] = new Backbone.Form(App.Have_item_form);
+            //Set the templates
+            Backbone.Form.setTemplates(App.templates,App.forms.have_arr[this.cur_have_item]);
 
             var cur_have_form = App.forms.have_arr[this.cur_have_item];
             cur_have_form.schema.obj_id.options  =App.collections.objs.getSelectOptions();
@@ -342,22 +464,49 @@
             //tab.panel.content=one_have_tpl_html;
             return one_have_tpl_html;
         },
+        initWantEvents:function (index) {
+             this.showWantPanels(index);
+        },
+        addWantForm: function(){
+           // var cmb_html         ="<select id='wish_from_cmb_"+this.last_want_item+"'></select>"
+            var want_item_html   ="";//"<div id='wish_attrib_panel_"+this.last_want_item+"'><div id='wish_attrib_cmb'></div><div id='wish_variant_"+this.last_want_item+"'></div></div>";
+            var one_want_tpl_html= _.template( $("#one-want-tpl").html(), {n:this.last_want_item,want_item_html:want_item_html} );
+            return one_want_tpl_html;
+        },
         addWantTab:function(){
             //$("#li-want-"+this.cur_want_item).removeClass("active");
             this.last_want_item++;
-            var content_new_tab="<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
+            var content_new_tab=this.addWantForm();//"<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
             $('#tbs-wants').tabs('add',{
+                width: "500px",
+                height: "auto",
                 title:'New Wishes',
-                content:'content_new_tab',
-                closable:true,
-                tools:[{
-                    iconCls:'icon-mini-refresh',
-                    handler:function(){
-                        //alert('refresh');
-                    }
-                }]
+                content:content_new_tab,
+                closable:false,
+
             });
-            this.cur_want_item=this.want_have_item;
+            this.cur_want_item=this.last_want_item;
+        },
+        showWantPanels:function(index){
+            var content_html=_.template( $("#wish-from-content").html(),{n:index});
+            console.log(index+") showWantPanels="+content_html);
+            $("#wish-attrib-panel-"+index).panel(
+                      {
+                          width:"500px",
+                          height:"150px",
+                          title: 'Select wish from:',
+                          content:content_html,
+                          tools: [{
+                              iconCls:'icon-add',
+                              handler:function(){alert('new attribute')}
+                          }]
+                      }
+            );
+            $("#wish-variant-"+index).numberspinner({
+                min: 1,
+                max: 4,
+                editable: true
+            });
         },
         render: function(){
 
@@ -365,29 +514,19 @@
                     App.zayavka_form.schema.info_source.options=App.collections.infoSources.getSelectOptions();
                     App.zayavka_form.schema.info_type.options=App.collections.infoTypes.getSelectOptions();
 
-
-
-
-                    //console.log("  App.zayavka_form.schema.info_source.options:")
-                    //console.log(App.zayavka_form.schema.info_source.options)
-
                     var zayavka_item_html = $(App.zayavka_form.render().el).html(); //"<h2>Form's place</h2>"//
-
-
 
                     var haves_tpl_html   = _.template( $("#haves-tpl").html(), {
                                                 one_have_tpl_html:""}
                     );
-
-                    var wants_tpl_html   = _.template( $("#wants-tpl").html(), {} );
+                    var one_want_tpl_html="";
+                    var wants_tpl_html   = _.template( $("#wants-tpl").html(), {one_want_tpl_html:one_want_tpl_html} );
 
                     var zayavka_tpl_html = _.template( $("#zayavka-tpl").html(), {
                                                 zayavka_item_html:zayavka_item_html,
                                                 haves_tpl_html:haves_tpl_html,
                                                 wants_tpl_html:wants_tpl_html}
                     );
-                    //console.log("this.el="+this.el)
-
 
                     $("#zayavka").html( zayavka_tpl_html );
 
@@ -426,13 +565,12 @@
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
     App.collections.rayons.reset(eval('<%=@rayons; %>'.replace(/&quot;/g,'"')));
 
-
-
     //console.log(App.collections.infoSources);
 
     App.models.zayavka = new App.Zayavka();
     App.models.haves   = new App.Haves();
     App.models.wants   = new App.Wants();
+
 
     App.models.zayavka.show(App.action);
  });//---ready
@@ -474,7 +612,6 @@
   <ol>
     <input type="submit" value="Save zayavka" name="commit">
     <a href="/admin/zayavkas">Cancel</a>
-    <button id="cancel" type="button"  class="ui-state-default ui-corner-all">Cancel</button>
   </ol>
 </fieldset>
  </div>
@@ -482,12 +619,13 @@
 <!--  ******************************TEMPLATES  HAVES****************************** -->
 <script type="text/template" id="haves-tpl">
  <div style="width:100%;height:100%">
-  <input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">
+  <!--<input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">-->
    <div id="tbs-haves"  class="easyui-tabs" >
      <div title="My object" style="padding:10px;background-color:#FFFFDD" >
        {{one_have_tpl_html}}
      </div>
    </div>
+
  </div>
 </script>
 <!--  ******************************TEMPLATES  ONE-HAVES****************************** -->
@@ -495,37 +633,21 @@
 <div id="have-item-{{n}}" class="have-item">
   <label>Предложение:</label>
   {{have_item_html}}
-  <input type="submit" value="Del (x)" id="delete-have_{{n}}">
+  <!--<input type="submit" value="Del (x)" id="delete-have_{{n}}">-->
 </div>
 </script>
 <!--  ******************************TEMPLATES WANTS****************************** -->
 <script type="text/template" id="wants-tpl">
   <div>
-  <input type="submit" value="Add ->" id="add_want" style="margin-left:35px;margin-bottom:10px">
+  <!--<input type="submit" value="Add ->" id="add_want" style="margin-left:35px;margin-bottom:10px">-->
 
   <div id="tbs-wants" class="easyui-tabs" style="width:550px;height:auto" >
-    <div title="About" style="padding:10px;background-color:#FFFFDD">
+    <div title="Wish-1" style="padding:10px;background-color:#FFFFDD">
       <p style="font-size:14px">jQuery EasyUI framework help you build your web page easily.</p>
-      <ul>
-        <li>easyui is a collection of user-interface plugin based on jQuery.</li>
-        <li>easyui provides essential functionality for building modem, interactive, javascript applications.</li>
-        <li>using easyui you don't need to write many javascript code, you usually defines user-interface by writing some HTML markup.</li>
-        <li>complete framework for HTML5 web page.</li>
-        <li>easyui save your time and scales while developing your products.</li>
-        <li>easyui is very easy but powerful.</li>
-      </ul>
+      title
+      {{one_want_tpl_html}}
     </div>
-    <div title="My Documents" style="padding:10px;background-color:#FFFFDD" >
-      <ul>
-        <li>easyui is a collection of user-interface plugin based on jQuery.</li>
-        <li>easyui provides essential functionality for building modem, interactive, javascript applications.</li>
-        <li>using easyui you don't need to write many javascript code, you usually defines user-interface by writing some HTML markup.</li>
 
-      </ul>
-    </div>
-    <div title=">  Help  <" data-options="closable:true" style="padding:30px">
-      This is the help content.
-    </div>
 
   </div>
 
@@ -534,7 +656,17 @@
 <!--  ******************************TEMPLATES  ONE-WANT****************************** -->
 <script type="text/template" id="one-want-tpl">
   <div id="want-item-{{n}}" class="want-item">
+    <label>Спрос:</label>
+    <div id="wish-attrib-panel-{{n}}">
+      {{want_item_html}}
+    </div>
+    <div id="wish-attrib-content-{{n}}">
+    </div>
   </div>
+</script>
+<script type="text/template" id="wish-from-content">
+  <label>Параметр:</label><select id="wish-from-cmb-{{n}}"><option id="0">Выберите параметр...</option></select>
+  <label>Вариант:</label><input type="text" id="wish-variant-{{n}}" size=3 value=1 ></input>
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
