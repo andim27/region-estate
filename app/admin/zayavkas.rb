@@ -56,12 +56,13 @@ ActiveAdmin.register Zayavka do
     def new
         @action="new"
         ##ActiveRecord::Base.include_root_in_json = false
-        @zayavka_fields=Zayavka.column_names;
-        @info_sources=InfoSource.select("id,name").all.to_json
-        @info_types=InfoType.select("id,name").all.to_json
-        @objs=Obj.select("id,name").all.to_json
-        @states=State.select("id,name").all.to_json
-        @rayons=Rayon.select("id,name").where("parent=2775").to_json
+        @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
+        @zayavka_fields= Zayavka.column_names;
+        @info_sources  = InfoSource.select("id,name").all.to_json
+        @info_types    = InfoType.select("id,name").all.to_json
+        @objs          = Obj.select("id,name").all.to_json
+        @states        = State.select("id,name").all.to_json
+        @rayons        = Rayon.select("id,name").where("parent=2775").to_json
         render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
     end
     def show
