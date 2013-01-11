@@ -141,19 +141,17 @@
                    },
                    onSelect:function(title,index){
                        $(".tabs-selected a.tabs-inner ").css({ 'background-color':'#FFFFDD'});
+                       $("#wish-attrib-panel-"+index).css({'height':'45px'});
                        App.main_view.cur_want_item = index;
                    }})
                //--init data TABS
                $("#tbs-haves").tabs("getTab",0).html(App.main_view.addHaveForm());
-               $("#tbs-wants").tabs("getTab",0).html(App.main_view.addWantForm())
+               $("#tbs-wants").tabs("getTab",0).html(App.main_view.addWantForm());
                App.main_view.initHaveEvents(0);
                App.main_view.initWantEvents(0);
                //--css hack
                 $(".tabs-panels .panel").css({'margin-bottom':"1px"});
 
-               //--add events
-               $("#add_have").click(function(){App.main_view.addHaveTab()});
-               $("#add_want").click(function(){App.main_view.addWantTab()});
         }
     });
 
@@ -185,7 +183,7 @@
         }
     });
 
-    //----------collection---------------------------
+    //----------collection common method---------------------------
      Backbone.Collection.prototype.getSelectOptions=function(){
          var options_arr=[{val:0,label:"select item..."}];
          for (var i in this.models) {
@@ -193,6 +191,24 @@
          }
          return options_arr;
      };
+     Backbone.Collection.prototype.fillHtmlSelect=function(dom_id,val_field) {
+         console.log("fillHtmlSelect dom_id="+dom_id);
+         var value_str="";
+         var out_str="<option value=0>Select item...</option>";
+         for (var i in this.models) {
+             if (val_field != undefined) {
+                 value_str=this.models[i].attributes[val_field]; //.field_name;
+             }else {
+                 value_str=this.models[i].attributes.id;
+             }
+             out_str=out_str+"<option value='"+value_str+"'>"+this.models[i].attributes.name+"</option>";
+
+         }
+         console.log("out_str="+out_str);
+         console.log("dom_id="+dom_id);
+         $("#"+dom_id).html(out_str);
+     }
+     //---------collection CLASS---------------------------------------
      App.InfoSources = Backbone.Collection.extend({
          url:"http://"+App.baseUrl+"info_sources/",
          model: App.InfoSource,
@@ -206,6 +222,16 @@
                  console.log(model);
 
                  });
+         }
+     });
+     App.HaveFields = Backbone.Collection.extend({
+         url:"http://"+App.baseUrl+"HaveFields.json/",
+         fillWishFromCmb: function(index){
+             var out_str="";
+             for (var i in this.models) {
+                 out_str=out_str+"<option value='"+this.models[i].attributes.field_name+"'>"+this.models[i].attributes.name+"</option>";
+             }
+             $("#wish-from-cmb-"+index).html(out_str);
          }
      });
      App.Objs = Backbone.Collection.extend({
@@ -225,12 +251,26 @@
          //urlMain:"http://"+App.baseUrl+"streets/inrayon/",
          url:"http://"+App.baseUrl+"streets/inrayon/",
          getStreetsInRayon:function(rayon_id){
-
+             //--common cmb
              this.rayon_id=rayon_id;
              this.url="http://"+App.baseUrl+"streets/inrayon/" + String(this.rayon_id)
              console.log("this.url="+this.url+" this.rayon_id="+this.rayon_id)
              var streets_list=this.fetch();
              return streets_list;
+             //---multiselect cmp
+             //$("#wish-from-cmb-"+index).combogrid({
+                //panelWidth:400,
+                //value:'Object',
+                //idField:'id',
+                //textField:'name',
+                //rows: [{"id":1,"name":"Object"},{"id":2,"name":"Price"}],
+                // //url: App.baseUrl+'HaveFields.json',
+                // columns:[[
+                // {field:'ck',checkbox:true},
+                // {field:'id',title:'id',width:60},
+                // {field:'name',title:'Field',width:60}
+//               ]]
+//            });
          }
      });
      App.Haves = Backbone.Collection.extend({
@@ -342,6 +382,7 @@
      };
      App.MainView = Backbone.View.extend({
         id:'#zayavka-tpl',
+        wi:0,
         cur_have_item:0,
         cur_want_item:0,
         last_have_item:0,
@@ -379,13 +420,7 @@
                 var new_title=this.options[this.selectedIndex].text;
                 console.log(new_title);
                 $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
-//                $('#tbs-haves').tabs('update', {tab: tab,
-//                    options: {
-//                        title: new_title,
-//
-//                    }
-//                });
-//                App.main_view.correctHaveCSS(index);
+
             });
             App.main_view.correctHaveCSS(index);
 
@@ -468,8 +503,8 @@
              this.showWantPanels(index);
         },
         addWantForm: function(){
-           // var cmb_html         ="<select id='wish_from_cmb_"+this.last_want_item+"'></select>"
-            var want_item_html   ="";//"<div id='wish_attrib_panel_"+this.last_want_item+"'><div id='wish_attrib_cmb'></div><div id='wish_variant_"+this.last_want_item+"'></div></div>";
+
+            var want_item_html   ="";
             var one_want_tpl_html= _.template( $("#one-want-tpl").html(), {n:this.last_want_item,want_item_html:want_item_html} );
             return one_want_tpl_html;
         },
@@ -477,12 +512,13 @@
             //$("#li-want-"+this.cur_want_item).removeClass("active");
             this.last_want_item++;
             var content_new_tab=this.addWantForm();//"<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
+
             $('#tbs-wants').tabs('add',{
                 width: "500px",
                 height: "auto",
-                title:'New Wishes',
+                title:'Wish',
                 content:content_new_tab,
-                closable:false,
+                closable:false
 
             });
             this.cur_want_item=this.last_want_item;
@@ -492,21 +528,79 @@
             console.log(index+") showWantPanels="+content_html);
             $("#wish-attrib-panel-"+index).panel(
                       {
-                          width:"500px",
-                          height:"150px",
+                          width:"auto",
+                          height:"45px",
+                          fit:true,
                           title: 'Select wish from:',
                           content:content_html,
                           tools: [{
                               iconCls:'icon-add',
-                              handler:function(){alert('new attribute')}
+                              handler:function(){App.main_view.addWishAttribContent();}
                           }]
                       }
             );
+            //--set variant
             $("#wish-variant-"+index).numberspinner({
                 min: 1,
                 max: 4,
                 editable: true
             });
+            //--set combobox-grid
+            //App.collections.havefields.fillWishFromCmb(index)
+            App.collections.havefields.fillHtmlSelect("wish-from-cmb-"+index,'field_name');
+
+        },
+        addWishAttribContent:function(){
+            //--compile tpl
+            var index= this.cur_want_item;
+            var field      = $("#wish-from-cmb-"+index+" option:selected").val();
+            var field_name = $("#wish-from-cmb-"+index+" option:selected").text();
+            var field_html ="";
+            if (field ==0){
+                alert("Select item from list!");
+                return;
+            }
+            var hf_arr=App.collections.havefields.where({'field_name':field});
+            var field_ui_type=hf_arr[0].attributes.field_ui_type;
+            var id_str="wi-"+this.wi+"-tb-"+index+"-wish-"+field;
+            if (field_ui_type == 'select') {
+                field_html ="<select id='"+id_str+"'><option value=0>Select value...</option></select>";
+            }
+            if (field_ui_type == 'input') {
+                field_html ="<input id='"+id_str+"' type='text' size='10' />";
+            }
+            if (field_ui_type == 'spinner') {
+                field_html="<input id='"+id_str+"' class='easyui-numberspinner' data-options='min:1,max:100,required:true' />"
+            }
+            var wish_f_tpl = _.template ($("#wish-field-content").html(),{n:index,wi:this.wi,field:field,field_name:field_name,field_html:field_html});
+            //--ad to content panel
+            $("#wish-attrib-content-"+index).append(wish_f_tpl);
+            //---UI-LINK-pars--------------------
+            if (field_ui_type == 'spinner'){
+                $.parser.parse('#wish-attrib-content-'+index);
+            }
+
+            //--fill select fields
+            if (field_html.search(/select/) != -1){
+                this.fillWishSelectField(field,index, this.wi);
+            }
+            this.wi++;
+        },
+        delWishFieldContent: function(field,index,wi) {
+            $("#wi-"+wi+"-tb-"+index+"-wish-field-"+field+"-content").remove();
+        },
+        fillWishSelectField:function (field,index,wi) {
+            console.log("Fill select wish field "+field);
+            var dom_id ="wi-"+wi+"-tb-"+index+"-wish-"+field;
+            if (field == "rayon_id") {
+                App.collections.rayons.fillHtmlSelect(dom_id);
+            }
+            if (field == "obj_id") {
+                App.collections.objs.fillHtmlSelect(dom_id);
+            }
+            if (field == "state_id") {
+                App.collections.states.fillHtmlSelect(dom_id);
+            }
         },
         render: function(){
 
@@ -560,11 +654,12 @@
     App.collections.states = new App.States();
     App.collections.rayons = new App.Rayons();
     App.collections.streets= new App.Streets();
+    App.collections.havefields=new App.HaveFields
 
     App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
     App.collections.rayons.reset(eval('<%=@rayons; %>'.replace(/&quot;/g,'"')));
-
+    App.collections.havefields.reset(eval('<%=@havefields; %>'.replace(/&quot;/g,'"')));
     //console.log(App.collections.infoSources);
 
     App.models.zayavka = new App.Zayavka();
@@ -593,14 +688,14 @@
       <td width="50%">
         <div class="panel">
           <h3>Haves</h3>
-          <p>Set what you have:</p>
+
           {{haves_tpl_html}}
         </div>
       </td>
       <td width="50%">
         <div class="panel">
           <h3>Wants</h3>
-          <p>Set what you want:</p>
+
           {{wants_tpl_html}}
         </div>
       </td>
@@ -642,7 +737,7 @@
   <!--<input type="submit" value="Add ->" id="add_want" style="margin-left:35px;margin-bottom:10px">-->
 
   <div id="tbs-wants" class="easyui-tabs" style="width:550px;height:auto" >
-    <div title="Wish-1" style="padding:10px;background-color:#FFFFDD">
+    <div title="Wish" style="padding:10px;background-color:#FFFFDD">
       <p style="font-size:14px">jQuery EasyUI framework help you build your web page easily.</p>
       title
       {{one_want_tpl_html}}
@@ -655,18 +750,47 @@
 </script>
 <!--  ******************************TEMPLATES  ONE-WANT****************************** -->
 <script type="text/template" id="one-want-tpl">
-  <div id="want-item-{{n}}" class="want-item">
+  <div id="want-item-{{n}}" class="want-item"  style="width: 500px; height: auto;">
     <label>Спрос:</label>
-    <div id="wish-attrib-panel-{{n}}">
+    <div id="wish-attrib-panel-{{n}}" style="padding:5px;" >
       {{want_item_html}}
+
     </div>
-    <div id="wish-attrib-content-{{n}}">
+    <hr>
+    <div id="wish-attrib-content-{{n}}" style="padding:5px;">
     </div>
   </div>
 </script>
+
 <script type="text/template" id="wish-from-content">
-  <label>Параметр:</label><select id="wish-from-cmb-{{n}}"><option id="0">Выберите параметр...</option></select>
+  <label>Параметр:</label>
+  <select id="wish-from-cmb-{{n}}"><option id="0">Выберите параметр...</option></select>
   <label>Вариант:</label><input type="text" id="wish-variant-{{n}}" size=3 value=1 ></input>
+</script>
+
+<script type="text/template" id="wish-field-content">
+  <div id="wi-{{wi}}-tb-{{n}}-wish-field-{{field}}-content" style="display:inline;width:100%;height:150px;margin:5px;background-color:#FFFFDD">
+   <table style="background-color:#dddddd">
+     <tr>
+       <td width='20%'>{{field_name}}</td>
+       <td width='30%'>
+         <select id="tb-{{n}}-wish-{{field}}-cond">
+         <option value="=" selected>Равно</option>
+         <option value="<>">Не равно</option>
+         <option value=">=">Больше или равно</option>
+         <option value="<=">Меньше или равно</option>
+         <option value=">">Больше</option>
+         <option value="<">Меньше</option>
+        </select></td>
+       <td width='30%'>
+         {{field_html}}
+       </td>
+       <td width="10%">
+         <a href="javascript:App.main_view.delWishFieldContent('{{field}}',{{n}},{{wi}})" id="wi-{{wi}}-tb-{{n}}-wish-field-{{field}}-del" >Удалить</a>
+       </td>
+     </tr>
+   </table>
+
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
