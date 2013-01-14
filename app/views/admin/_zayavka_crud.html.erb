@@ -11,13 +11,26 @@
 //        });
 //       $("#tbs").idTabs();
     //------------------DEFINITIONS-----
-
+    HB=Handlebars;
     window.App={action:"<%=@action %>",
                 models:{},
                 collections:{},
                 forms:{zayavka:{},have_arr:[],want_ar:[]},
+                protocol:"http://",
                 baseUrl:"<%= request.env["HTTP_HOST"]; %>/"
     };
+    HB.registerHelper('ifCond', function(v1, v2, options) {
+         if(v1 == v2) {
+             return options.fn(this);
+         }
+         return options.inverse(this);
+     });
+     HB.registerHelper('if-in', function(v1, v2, options) {
+         if(v2.indexOf(v1) !=-1) {
+             return options.fn(this);
+         }
+         return options.inverse(this);
+     });
     //----------------------------ROUTER------------------------------------
      App.Router = Backbone.Router.extend({
          routes: {
@@ -42,7 +55,8 @@
      });
     //----------------------------MODELS------------------------------------
     App.Zayavka = Backbone.Model.extend({
-        urlRoot: App.baseUrl+"zayavka/",
+        urlRoot:App.protocol+App.baseUrl+"zayavkas/",
+        url:App.protocol+App.baseUrl+"zayavkas/",
         initialize: function(){
             this.zayavka_fields=eval('<%=@zayavka_fields; %>'.replace(/&quot;/g,'"'));
 
@@ -51,18 +65,80 @@
 //            console.log("HTTP_HOST="+"<%= request.env["HTTP_HOST"]; %>");
         },
         defaults: {
-            id:  111,
+//            id:  111,
             name:       'Text',
             created_at: 'DateTime',
             updated_at: 'DateTime',
             tel_1: 'Text',
             tel_2: 'Text',
             dop: 'Text',
-            info_type:     0,
-            info_source:   0,
-            published:1
+            info_type_id:  0,
+            info_source_id:0,
+            contact_id:0,
+            published:1,
+            haves:[],
+            wants:[]
         },
+        validate: function(attrs) {
+         return;
+        },
+        pickAttributes:function(name){//--собрать все аттрибуты для заявки
+            var param;
+            if (name=="zayavka"){
+              var z_attr_arr=$("*[id^='z-']:not(disabled)");
+              for (var i=0; i<z_attr_arr.length;i++){
+                  param = _.last(z_attr_arr[i].id.split("-"));
+                  console.log("param="+param)
+                  console.log("z_attr_arr[i].value="+z_attr_arr[i].value)
+                  //App.models.zayavka.set({param:z_attr_arr[i].value})
+                  App.models.zayavka.attributes[param]=z_attr_arr[i].value
+              }
+            }
+            if (name=="haves"){
+                var h_tabs_cnt=$('#tbs-haves').tabs('tabs').length;
+                var attr_arr;
+                var have_tab_str;
+                var param;
+                var key_val={},rec={}
+                var have_tab_rec=[];
+                for (var i=0; i<h_tabs_cnt;i++){
+                    rec={};
+                    attr_arr=$("*[id^='hh-"+i+"']:not(disabled)");
+                    for (var j=0; j<attr_arr.length;j++){
+                       param = _.last(attr_arr[j].id.split("-"));
+                       console.log("param="+param)
+                       //key_val=eval("[{'"+param+"':'"+attr_arr[j].value+"'}]")
+                       rec[param]=attr_arr[j].value;
+                       //console.log("nodeName="+attr_arr[j].type)
+                       if (attr_arr[j].type=="checkbox") {
+                           if (attr_arr[j].checked) {
+                                  rec[param]=1;
+                           } else {rec[param]=0;}
+                       }
+                       //console.log(key_val)
+                       //have_tab_rec.push(key_val);
+                    }
+                   // App.models.zayavka.attributes['haves'].push(have_tab_rec)
+                    App.models.zayavka.attributes['haves'].push(rec)
+                }
+                console.log("PICK haves")
+                console.log(App.models.zayavka.attributes['haves'])
+            }
+        },
+        zayavkaSave:function(){
+          confirm("Save zayavka?");
+          this.pickAttributes("zayavka");
+          this.pickAttributes("haves");
+          this.pickAttributes("wants");
 
+//          App.models.zayavka.save().error(function(e){
+//              console.log(e);
+//              $.messager.alert('Error',"Status=("+ e.status+")"+e.statusText,'error');
+//          }).success(function(e){
+//              $.messager.alert('OK!','Zayavka data saved!','info');
+//          });
+          //console.log(App.models.zayavka.attributes)
+        },
         show: function (action){
               console.log(action)
 
@@ -76,25 +152,8 @@
                        height:"auto",
                        border:true,
                        fit:false,
-                       tools:[{
-                           iconCls:'icon-add',
-                           handler:function(){
-                               App.main_view.addHaveTab();
-                           }
-                       },
-                       {
-                           iconCls:'icon-save',
-                           handler:function(){
-                               confirm('save?')
-                           }
-                       },
-                       {
-                           iconCls:'icon-remove',
-                           handler:function(){
-                               confirm('remove?')
-                           }
-                       }
-                       ],
+                       tools: App.main_view.getTabsTools("have"),
+
                        onBeforeClose: function(title,index){
                            return confirm('Are you sure you want to close ' + title+" tab n="+index+" ?");
                        },
@@ -115,25 +174,7 @@
                    height:"auto",
                    border:true,
                    fit:false,
-                   tools:[{
-                       iconCls:'icon-add',
-                       handler:function(){
-                           App.main_view.addWantTab();
-                       }
-                   },
-                       {
-                           iconCls:'icon-save',
-                           handler:function(){
-                               confirm('save?')
-                           }
-                       },
-                       {
-                           iconCls:'icon-remove',
-                           handler:function(){
-                               confirm('remove?')
-                           }
-                       }
-                   ],
+                   tools: App.main_view.getTabsTools("want"),
                    onAdd:function(title,index){
                        console.log("onAdd want "+index)
                        App.main_view.initWantEvents(index);
@@ -149,6 +190,7 @@
                $("#tbs-wants").tabs("getTab",0).html(App.main_view.addWantForm());
                App.main_view.initHaveEvents(0);
                App.main_view.initWantEvents(0);
+               App.main_view.initZayavkaEvents(0);
                //--css hack
                 $(".tabs-panels .panel").css({'margin-bottom':"1px"});
 
@@ -210,7 +252,7 @@
      }
      //---------collection CLASS---------------------------------------
      App.InfoSources = Backbone.Collection.extend({
-         url:"http://"+App.baseUrl+"info_sources/",
+         url:App.protocol+App.baseUrl+"info_sources/",
          model: App.InfoSource,
          parse: function(response) {
                  //console.log("RESP 0: "+response[0]);
@@ -233,6 +275,12 @@
              }
              $("#wish-from-cmb-"+index).html(out_str);
          }
+     });
+     App.Statuses = Backbone.Collection.extend({
+         //url:"http://"+App.baseUrl+"objs/",
+     });
+     App.Rents = Backbone.Collection.extend({
+         //url:"http://"+App.baseUrl+"objs/",
      });
      App.Objs = Backbone.Collection.extend({
          url:"http://"+App.baseUrl+"objs/",
@@ -286,19 +334,23 @@
         initialize: function(){
            //this.schema=this.setFormSchema();
         },
-
+        idPrefix:"z-",
+        model:  App.models.zayavka,
         schema:(App.action=="new")?
                 {
-                    id:  'Number',
-                    name:       'Text',
-                    created_at: 'DateTime',
-                    updated_at: 'DateTime',
-                    tel_1: 'Text',
-                    tel_2: 'Text',
-                    dop: 'Text',
-                    info_type:      { type: 'Select', options: [] },
-                    info_source:    { type: 'Select', options:  [] },
-                    published: {type: 'Checkbox'}
+                    id:    {type:'Number',template:'field'},
+                    name:  {type:'Text',template:'field',validators: ['required']},
+                    tel_1: {type:'Text',template:'field'},
+                    tel_2: {type:'Text',template:'field'},
+                    created_at: {type:'Text',template:'field'},
+                    updated_at: {type:'Text',template:'field'},
+                    status_id:  { type: 'Select', options:  [],template:'field'  },
+                    info_type_id:  { type: 'Select', options: [],template:'field_clear' },
+                    info_source_id:{ type: 'Select', options: [],template:'field' },
+                    contact_id: { type: 'Select',title:"Contact", options: [{val:0,label:"???"}],template:'field' },
+                    dop:  {type:'Text',template:'field',template:'field'},
+
+                    published: {type: 'Checkbox',template:'field_br'}
 
                 }:(App.action=="show")?
                 {
@@ -306,9 +358,9 @@
                 }:(App.action=="update")?
                 {
 
-                }:{id:'Number',name:'Text'},
-        idPrefix:"z-",
-        model:  App.models.zayavka
+                }:{id:'Number',name:'Text'}
+
+
     });//.render();
      //---------------Have Item form-------------------------
      //App.Have_item_form = Backbone.Form({
@@ -323,26 +375,27 @@
              obj_id: { type: 'Select',options:["111","222"],template:'field'},
              room: {type:'Number',template:'field'},
              price_estimate: {type:'Number',template:'field'},
-             price_want:{type:'Number',template:'field_br'},
-             state_id:  {type:'Select',options:[],template:'field_clear'},
+             price_want:{type:'Number',template:'field'},
 
-             rayon_id: {type: 'Select',options:[],template:'field'},
-             street_id:{type: 'Select',options:[],template:'field_br'},
-             house_n: {type: 'Text',template:'field'},
+             floor:{type:'Number',template:'field_clear'},
+             floor_house:  {type:'Number',template:'field'},
+
+             rayon_id: {type: 'Select',options:[],template:'field_clear'},
+             street_id:{type: 'Select',options:[],template:'field'},
+
+             house_n: {type: 'Text',template:'field_clear'},
              flat_n:  {type: 'Text',template:'field'},
 
              orientir: {type: 'Text',template:'field_clear'},
 
-             year: {type:'Number',template:'field'},
-             floor:{type:'Number',template:'field'},
-             floor_house:  {type:'Number',template:'field_br'},
-
-             s_all: {type: 'Number',template:'field'},
+             s_all: {type: 'Number',template:'field_clear'},
              s_live:{type: 'Number',template:'field'},
-             s_kux :{type: 'Number',template:'field_br'},
+             s_kux :{type: 'Number',template:'field'},
+             state_id:  {type:'Select',options:[],template:'field'},
+             year: {type:'Number',template:'field'},
 
              tel:{type:'Text',template:'field_br'},
-             dop:{type:'Text',template:'field_br'},
+             dop:{type:'TextArea',template:'field_br'},
 
 
             obmen_want:{type: 'Checkbox',template:'field'},
@@ -399,8 +452,67 @@
           "haveFillStreet":"fillStreets",
           "haveFormShow":"addHaveForm"
         },
+        initZayavkaEvents:function(){
+            if (App.action="new"){
+                $("#zayavka_save").click(function(){App.models.zayavka.zayavkaSave();});
+                $("#z-id").attr({"disabled":"disabled","placeholder":0})
+                $("#z-created_at,#z-updated_at").attr({"disabled":"disabled","placeholder":"today"})
+                $("#z-published").val(1).attr("checked",1);
+            }
+            if (App.action in ["view","update"]){
+                App.main_view.bindFormAttributes("zayavka");
+            }
+        },
+        bindFormAttributes:function(name){
+
+        },
         setHaveTabTitle:function(index){
 
+        },
+        getTabsTools:function(tabs_name){
+            var tool_help={
+                iconCls:'icon-help',
+                handler:function(){
+                    if (tabs_name=="have"){
+                        App.main_view.historyHaveTab();
+                    }
+                    if (tabs_name=="want"){
+                        App.main_view.historyWantTab();
+                    }
+                }
+            };
+            var tool_add={
+                iconCls:'icon-add',
+                handler:function(){
+                    if (tabs_name=="have"){
+                        App.main_view.addHaveTab();
+                    }
+                    if (tabs_name=="want"){
+                        App.main_view.addWantTab();
+                    }
+                }
+            };
+            var tool_save={
+                iconCls:'icon-save',
+                handler:function(){
+                    confirm('save?')
+                }
+            };
+            var tool_remove={
+                iconCls:'icon-remove',
+                handler:function(){
+                    confirm('remove?')
+                }
+            };
+            if (App.action=="new"){
+                return [tool_add,tool_remove];
+            }
+            if (App.action=="update"){
+                return [tool_add,tool_remove,tool_save,tool_help];
+            }
+            if (App.action=="view"){
+                return [tool_help];
+            }
         },
         getHaveTabIndex:function () {
             var tab = $('#tbs-haves').tabs('getSelected');
@@ -427,25 +539,41 @@
         },
         correctHaveCSS:function(index){
              //--UI style-------------------------
-            $("#hh-"+index+"-room").attr("size",2).css({"font-size":"lage","width":"80px"});
-            $("#hh-"+index+"-room").numberspinner({
-                min: 1,
-                max: 100,
-                editable: true
-            });
-
+            $("#hh-"+index+"-room").attr("size",4).css({"font-size":"lage","font-weight":"bold"});
+            $("#hh-"+index+"-room").numberspinner({min: 1,max: 100,editable: true});
+            $("#hh-"+index+"-year").attr("size",8);
+            $("#hh-"+index+"-floor").attr("size",4);
+            $("#hh-"+index+"-floor_house").attr("size",4);
+            $("#hh-"+index+"-floor, #hh-"+index+"-floor_house").numberspinner({min: 1,max: 100, editable: true});
+            $("#hh-"+index+"-year").numberspinner({min: 1900,max: 2050, editable: true});
              //--css correct-----------------------
+             $(".bbf-field").css("margin","5px");
              $("#hh-"+index+"-price_estimate").attr("size",8).css("color","red");
              $("#hh-"+index+"-price_want").attr("size",8).css("color","green");
              $("#hh-"+index+"-house_n").attr("size",8);
              $("#hh-"+index+"-flat_n").attr("size",8);
 
+             $("#hh-"+index+"-s_all").attr("size",4);
+             $("#hh-"+index+"-s_live").attr("size",4);
+             $("#hh-"+index+"-s_kux").attr("size",4);
+
              $("#hh-"+index+"-orientir").attr("size",75);
              $("#hh-"+index+"-dop").attr("size",75);
              $("#hh-"+index+"-tel").attr("size",75);
-             $(".bbf-field").css("margin","5px");
-         },
 
+         },
+        correctZayavkaCSS:function(){
+            //--B------!!!!!!--activeadmin----!!!!!!!!
+            $("#active_admin_content").css({"padding-top":0}) ;
+            //--E-----!!!!!!--activeadmin----!!!!!!!!
+            $("#zayavka_in_panel").css({"width":window.screen.width*0.92,"height":"100px"});
+            $.parser.parse("#zayavka_top_panel");
+            $("#z-id").css({"width":"100px"});
+            $("#z-name").css({"width":"200px"});
+            $("#z-tel_1,#z-tel_2").css({"width":"110px","type":"tel" }); // type="date"
+            $("#z-created_at,#z-updated_at").css({"width":"110px","type":"date"}) ;
+            $("#z-dop").css({"width":"400px"});
+        },
         fillStreets:function(){
             var cur_have_item=this.getHaveTabIndex();
             App.collections.streets.getStreetsInRayon($("#hh-"+cur_have_item+"-rayon_id").val()).done(function(result){
@@ -601,13 +729,29 @@
             if (field == "state_id") {
                 App.collections.states.fillHtmlSelect(dom_id);
             }
+            if (field == "rent_want") {
+                App.collections.rents.fillHtmlSelect(dom_id);
+            }
         },
         render: function(){
 
-                    App.zayavka_form.fields=App.models.zayavka.zayavka_fields;
-                    App.zayavka_form.schema.info_source.options=App.collections.infoSources.getSelectOptions();
-                    App.zayavka_form.schema.info_type.options=App.collections.infoTypes.getSelectOptions();
+                    //Set the templates
+                    Backbone.Form.setTemplates(App.templates,App.forms.zayavka_form);
 
+                    App.zayavka_form.model=App.models.zayavka;
+                    App.zayavka_form.fields=App.models.zayavka.zayavka_fields;
+                    App.zayavka_form.schema.info_source_id.options=App.collections.infoSources.getSelectOptions();
+                    App.zayavka_form.schema.info_type_id.options=App.collections.infoTypes.getSelectOptions();
+                    App.zayavka_form.schema.status_id.options=App.collections.statuses.getSelectOptions();
+                    var data_tpl={};
+                    if (App.action=="new"){
+                        data_tpl={action_new:1,action:"new"}
+                    }
+                    if (App.action=="update"){
+                        data_tpl={action_update:1,action:"update"}
+                    }
+
+                    var zayavka_tools_options= HB.compile($("#zayavka_panel_options").html())(data_tpl);
                     var zayavka_item_html = $(App.zayavka_form.render().el).html(); //"<h2>Form's place</h2>"//
 
                     var haves_tpl_html   = _.template( $("#haves-tpl").html(), {
@@ -617,13 +761,15 @@
                     var wants_tpl_html   = _.template( $("#wants-tpl").html(), {one_want_tpl_html:one_want_tpl_html} );
 
                     var zayavka_tpl_html = _.template( $("#zayavka-tpl").html(), {
+                                                action:App.action,
+                                                zayavka_tools_options:zayavka_tools_options,
                                                 zayavka_item_html:zayavka_item_html,
                                                 haves_tpl_html:haves_tpl_html,
                                                 wants_tpl_html:wants_tpl_html}
                     );
 
                     $("#zayavka").html( zayavka_tpl_html );
-
+                    this.correctZayavkaCSS();
 
 
         }
@@ -654,12 +800,16 @@
     App.collections.states = new App.States();
     App.collections.rayons = new App.Rayons();
     App.collections.streets= new App.Streets();
-    App.collections.havefields=new App.HaveFields
+    App.collections.statuses=new App.Statuses();
+    App.collections.havefields=new App.HaveFields();
+    App.collections.rents=new App.Rents();
 
     App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
     App.collections.rayons.reset(eval('<%=@rayons; %>'.replace(/&quot;/g,'"')));
     App.collections.havefields.reset(eval('<%=@havefields; %>'.replace(/&quot;/g,'"')));
+    App.collections.statuses.reset(eval('<%=@statuses; %>'.replace(/&quot;/g,'"')));
+     App.collections.rents.reset(eval('<%=@rents; %>'.replace(/&quot;/g,'"')));
     //console.log(App.collections.infoSources);
 
     App.models.zayavka = new App.Zayavka();
@@ -672,16 +822,31 @@
 </script>
 
 <!--  ******************************TEMPLATES****************************** -->
-
-
+<script type="text/x-handlebars-template" id="zayavka_panel_options">
+  {{#ifCond action "update"}}
+  {
+  iconCls:'icon-save',
+  handler:function(){alert('saved!!!')}
+  },
+  {{/ifCond}}
+  {
+  iconCls:'icon-help',
+  handler:function(){alert('history')}
+  }
+</script>
+<script type="text/template" id="zayavka-top-content-tpl">
+  {{#ifCond action "new"}}
+  {{/ifCond}}
+</script>
 <script type="text/template" id="zayavka-tpl">
- <div class="Columns">
- <div class="panel">
- <h3>Zayavka</h3>
-  <p>Set common attributes:</p>
-  <div style="width:50%">
+ <!--<div class="Columns">-->
+ <div id="zayavka_top_panel">
+  <div id="zayavka_in_panel"style="height: 120px;" class="easyui-panel" title="Zayavka"  data-options="fit:true,collapsible:true,tools:[
+			{{zayavka_tools_options}}
+			]">
   {{zayavka_item_html}}
   </div>
+  <!--</div>-->
 </div>
   <table width="98%">
     <tr>
@@ -705,11 +870,11 @@
 
   <fieldset class="actions">
   <ol>
-    <input type="submit" value="Save zayavka" name="commit">
+    <input type="submit" value="Save zayavka" id="zayavka_save" name="commit">
     <a href="/admin/zayavkas">Cancel</a>
   </ol>
 </fieldset>
- </div>
+
 </script>
 <!--  ******************************TEMPLATES  HAVES****************************** -->
 <script type="text/template" id="haves-tpl">
@@ -742,8 +907,6 @@
       title
       {{one_want_tpl_html}}
     </div>
-
-
   </div>
 
   </div>
@@ -794,3 +957,5 @@
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
+<div id="dialog"></div>
+<div id="win"></div>
