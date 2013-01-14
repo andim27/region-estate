@@ -6,6 +6,7 @@
   belongs_to :contact
   belongs_to :info_source
   belongs_to :info_type
+  belongs_to :status
 
   scope :from_people, lambda {
     Zayavka.select("z.*").from("zayavkas as z,info_sources as inf").where("z.info_source_id=inf.id AND inf.info_type=?",1) ##.order('z.id asc')
