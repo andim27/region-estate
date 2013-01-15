@@ -83,46 +83,67 @@
          return;
         },
         pickAttributes:function(name){//--собрать все аттрибуты для заявки
-            var param;
+            var attr_arr,param,tabs_cnt;
+            var rec={},rec_wishlist={}
             if (name=="zayavka"){
               var z_attr_arr=$("*[id^='z-']:not(disabled)");
               for (var i=0; i<z_attr_arr.length;i++){
                   param = _.last(z_attr_arr[i].id.split("-"));
-                  console.log("param="+param)
-                  console.log("z_attr_arr[i].value="+z_attr_arr[i].value)
+                  //console.log("param="+param)
+                  //console.log("z_attr_arr[i].value="+z_attr_arr[i].value)
                   //App.models.zayavka.set({param:z_attr_arr[i].value})
                   App.models.zayavka.attributes[param]=z_attr_arr[i].value
               }
             }
             if (name=="haves"){
-                var h_tabs_cnt=$('#tbs-haves').tabs('tabs').length;
-                var attr_arr;
-                var have_tab_str;
-                var param;
-                var key_val={},rec={}
-                var have_tab_rec=[];
-                for (var i=0; i<h_tabs_cnt;i++){
+                App.models.zayavka.attributes['haves']=[];//RESET
+                tabs_cnt=$('#tbs-haves').tabs('tabs').length;
+                for (var i=0; i<tabs_cnt;i++){
                     rec={};
                     attr_arr=$("*[id^='hh-"+i+"']:not(disabled)");
                     for (var j=0; j<attr_arr.length;j++){
                        param = _.last(attr_arr[j].id.split("-"));
                        console.log("param="+param)
-                       //key_val=eval("[{'"+param+"':'"+attr_arr[j].value+"'}]")
                        rec[param]=attr_arr[j].value;
-                       //console.log("nodeName="+attr_arr[j].type)
                        if (attr_arr[j].type=="checkbox") {
                            if (attr_arr[j].checked) {
                                   rec[param]=1;
                            } else {rec[param]=0;}
                        }
-                       //console.log(key_val)
-                       //have_tab_rec.push(key_val);
                     }
-                   // App.models.zayavka.attributes['haves'].push(have_tab_rec)
                     App.models.zayavka.attributes['haves'].push(rec)
                 }
-                console.log("PICK haves")
-                console.log(App.models.zayavka.attributes['haves'])
+                //console.log("PICK haves")
+                //console.log(App.models.zayavka.attributes['haves'])
+            }
+            if (name=="wants"){
+                var start;
+                App.models.zayavka.attributes['wants']=[];//RESET
+                tabs_cnt=$('#tbs-wants').tabs('tabs').length;
+                for (var i=0; i<tabs_cnt;i++){
+                    rec_wishlist={};
+                    attr_arr=$("*[id*='"+i+"-wishlist']:not(disabled)");
+                    attr_length=attr_arr.length;
+                    if (attr_length <=0) { $.messager.alert('Error',"Fill wish list!",'error');return;}
+                    start=0;
+                    row_wishlist=[]
+                    do {
+                        rec={};
+                        rec['field']=attr_arr[start].value;
+                        rec['cond'] =attr_arr[start+1].value;
+                        rec['value']=attr_arr[start+2].value;
+                        //rec_wishlist.push(rec)
+                        row_wishlist.push(rec)
+                        start=start+3;
+                    } while (start<attr_length)
+                    rec_wishlist.variant =$("#wish-variant-"+i).val()
+                    rec_wishlist.wishlist=row_wishlist
+
+                    //console.log(rec_wishlist)
+                    App.models.zayavka.attributes['wants'].push(rec_wishlist)
+                }
+                console.log("PICK wants tabs_cnt="+tabs_cnt)
+                console.log(App.models.zayavka.attributes['wants'])
             }
         },
         zayavkaSave:function(){
@@ -131,13 +152,14 @@
           this.pickAttributes("haves");
           this.pickAttributes("wants");
 
-//          App.models.zayavka.save().error(function(e){
-//              console.log(e);
-//              $.messager.alert('Error',"Status=("+ e.status+")"+e.statusText,'error');
-//          }).success(function(e){
-//              $.messager.alert('OK!','Zayavka data saved!','info');
-//          });
-          //console.log(App.models.zayavka.attributes)
+          App.models.zayavka.save().error(function(e){
+              console.log(e);
+              $.messager.alert('Error',"Status=("+ e.status+")"+e.statusText,'error');
+          }).success(function(e){
+              $.messager.alert('OK!','Zayavka data saved!','info');
+          });
+          console.log("PICK zayavka all")
+          console.log(App.models.zayavka.attributes)
         },
         show: function (action){
               console.log(action)
@@ -376,7 +398,7 @@
              room: {type:'Number',template:'field'},
              price_estimate: {type:'Number',template:'field'},
              price_want:{type:'Number',template:'field'},
-
+             torg:{type: 'Checkbox',template:'field'},
              floor:{type:'Number',template:'field_clear'},
              floor_house:  {type:'Number',template:'field'},
 
@@ -684,13 +706,15 @@
             var field      = $("#wish-from-cmb-"+index+" option:selected").val();
             var field_name = $("#wish-from-cmb-"+index+" option:selected").text();
             var field_html ="";
+
+            field_name="<label>"+field_name+"</label><input disabled type='hidden' id='wi-"+this.wi+"-tb-"+index+"-wishlist-field_name' value='"+field+"' />"
             if (field ==0){
                 alert("Select item from list!");
                 return;
             }
             var hf_arr=App.collections.havefields.where({'field_name':field});
             var field_ui_type=hf_arr[0].attributes.field_ui_type;
-            var id_str="wi-"+this.wi+"-tb-"+index+"-wish-"+field;
+            var id_str="wi-"+this.wi+"-tb-"+index+"-wishlist-"+field;
             if (field_ui_type == 'select') {
                 field_html ="<select id='"+id_str+"'><option value=0>Select value...</option></select>";
             }
@@ -719,7 +743,7 @@
         },
         fillWishSelectField:function (field,index,wi) {
             console.log("Fill select wish field "+field);
-            var dom_id ="wi-"+wi+"-tb-"+index+"-wish-"+field;
+            var dom_id ="wi-"+wi+"-tb-"+index+"-wishlist-"+field;
             if (field == "rayon_id") {
                 App.collections.rayons.fillHtmlSelect(dom_id);
             }
@@ -937,7 +961,7 @@
      <tr>
        <td width='20%'>{{field_name}}</td>
        <td width='30%'>
-         <select id="tb-{{n}}-wish-{{field}}-cond">
+         <select id="tb-{{n}}-wishlist-cond-{{field}}">
          <option value="=" selected>Равно</option>
          <option value="<>">Не равно</option>
          <option value=">=">Больше или равно</option>
