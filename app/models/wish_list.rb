@@ -1,3 +1,3 @@
-class Wish_list < ActiveRecord::Base
+class WishList < ActiveRecord::Base
   has_many :want
 end
