@@ -198,7 +198,7 @@ ActiveAdmin.register Zayavka do
       if !rec.want.empty?
         rec.want.each do |w|
           if w.obj.id==1 # doplata
-            span (w.obj.name+":"+w.price.to_s)  if w.price !=0
+            span (w.obj.name+":"+w.price_want.to_s)  if w.price_want !=0
           else #objects
             span w.room       if w.room !=0
             span w.obj.name   if w.obj != nil
