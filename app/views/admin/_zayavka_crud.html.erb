@@ -5,14 +5,16 @@
 
 <script>
  $(function() {
-//        $( "#tbs" ).tabs({
-//            event: "mouseover",
-//            heightStyle: "fill"
-//        });
-//       $("#tbs").idTabs();
+
     //------------------DEFINITIONS-----
     HB=Handlebars;
+    function log(p){
+    if (console != undefined){
+        console.log(p)
+    }
+    };
     window.App={action:"<%=@action %>",
+                zayavka_id:<%=@zayavka_id %>,
                 models:{},
                 collections:{},
                 forms:{zayavka:{},have_arr:[],want_ar:[]},
@@ -34,32 +36,40 @@
     //----------------------------ROUTER------------------------------------
      App.Router = Backbone.Router.extend({
          routes: {
-             "admin/zayavkas/new":       "zayavkaNewFun",    // #new
+             "admin/zayavkas/new":       "zayavkaNewFun",   // #new
              "admin/zayavkas/:id/edit":  "zayavkaEditFun",  // #update
-             "admin/zayavkas/:id":   "zayavkaShowFun"   // #show
+             "admin/zayavkas/:id":       "zayavkaShowFun"   // #show
          },
          zayavkaNewFun: function() {
              App.action="new";
              console.log("Router action="+ App.action);
          },
-         zayavkaEditFun: function(query, id) {
+         zayavkaEditFun: function(id) {
              App.action="edit";
              App.zayavka_id=<%=@zayavka_id %>
-             console.log("Router action="+ App.action+" id="+App.zayavka_id+" q="+query);
+             console.log("Router action="+ App.action+" id="+App.zayavka_id+" id="+id);
          },
-         zayavkaShowFun: function(query, id) {
+         zayavkaShowFun: function(id,q) {
              App.action="show";
              App.zayavka_id=id;
-             console.log("Router action="+ App.action+" id="+App.cur_id+" q="+query);
+             console.log("Router action="+ App.action+" id="+App.zayavka_id+" q="+q);
          }
      });
     //----------------------------MODELS------------------------------------
     App.Zayavka = Backbone.Model.extend({
         urlRoot:App.protocol+App.baseUrl+"zayavkas/",
-        url:App.protocol+App.baseUrl+"zayavkas/",
+       ////// url:App.protocol+App.baseUrl+"zayavkas/",
         initialize: function(){
             this.zayavka_fields=eval('<%=@zayavka_fields; %>'.replace(/&quot;/g,'"'));
-
+            if (App.action =="edit")  {
+                //this.set({id:<%=@zayavka_id %>})
+                zz="["+'<%=@zayavka; %>'.replace(/&quot;/g,'"')+"]";
+//                log('zayavka data')
+//                log('<%=@zayavka; %>')
+//                this.defaults={}
+                this.set(eval(zz)[0])
+                //this.fetch()
+            }
 //            console.log("SERVER_NAME="+"<%= request.env["SERVER_NAME"]; %>");
 //            console.log("REQUEST_URI="+"<%= request.env["REQUEST_URI"]; %>");
 //            console.log("HTTP_HOST="+"<%= request.env["HTTP_HOST"]; %>");
@@ -75,12 +85,15 @@
             info_type_id:  0,
             info_source_id:0,
             contact_id:0,
-            published:1,
-            haves:[],
-            wants:[]
+            published:1
+           // haves:[],
+           // wants:[]
         },
         validate: function(attrs) {
          return;
+        },
+        fillUIFields:function(){
+
         },
         pickAttributes:function(name){//--собрать все аттрибуты для заявки
             var attr_arr,param,tabs_cnt;
@@ -89,9 +102,6 @@
               var z_attr_arr=$("*[id^='z-']:not(disabled)");
               for (var i=0; i<z_attr_arr.length;i++){
                   param = _.last(z_attr_arr[i].id.split("-"));
-                  //console.log("param="+param)
-                  //console.log("z_attr_arr[i].value="+z_attr_arr[i].value)
-                  //App.models.zayavka.set({param:z_attr_arr[i].value})
                   App.models.zayavka.attributes[param]=z_attr_arr[i].value
               }
             }
@@ -111,7 +121,12 @@
                            } else {rec[param]=0;}
                        }
                     }
-                    App.models.zayavka.attributes['haves'].push(rec)
+                    if (App.action=="new") {
+                        App.models.zayavka.attributes['haves'].push(rec)
+                    }
+                    if (App.action=="edit") {
+                        App.collections.haves.models['haves'].push(rec)
+                    }
                 }
                 //console.log("PICK haves")
                 //console.log(App.models.zayavka.attributes['haves'])
@@ -132,14 +147,11 @@
                         rec['field']=attr_arr[start].value;
                         rec['cond'] =attr_arr[start+1].value;
                         rec['value']=attr_arr[start+2].value;
-                        //rec_wishlist.push(rec)
                         row_wishlist.push(rec)
                         start=start+3;
                     } while (start<attr_length)
                     rec_wishlist.variant =$("#wish-variant-"+i).val()
                     rec_wishlist.wishlist=row_wishlist
-
-                    //console.log(rec_wishlist)
                     App.models.zayavka.attributes['wants'].push(rec_wishlist)
                 }
                 console.log("PICK wants tabs_cnt="+tabs_cnt)
@@ -148,22 +160,36 @@
         },
         zayavkaSave:function(){
           confirm("Save zayavka?");
+
           this.pickAttributes("zayavka");
           this.pickAttributes("haves");
           this.pickAttributes("wants");
-
+          if ((App.models.zayavka.attributes['haves']).length==0 && (App.models.zayavka.attributes['wants'].length==0)){
+              $(".l-btn").css("width","70px");//--hack
+              $.messager.alert('Error',"Fill have or want!",'error');
+              return;
+          }
           App.models.zayavka.save().error(function(e){
               console.log(e);
               $.messager.alert('Error',"Status=("+ e.status+")"+e.statusText,'error');
           }).success(function(e){
-              $.messager.alert('OK!','Zayavka data saved!','info');
-          });
+              //$.messager.alert('OK!','Zayavka data saved!','info');
+              $.messager.confirm('Zayavka confirm','Zayavka data saved!\nAdd new one?',function(r){
+                  if (r){
+                      console.log("zayavka EDIT "+App.models.zayavka.id)
+                      App.router.navigate(App.protocol+App.baseUrl+"admin/zayavkas/edit/"+App.models.zayavka.id)
+                  } else{
+                      App.models.zayavka.clear();
+                      console.log("zayavka CLEAR")
+                  }
+              });
+                  });
           console.log("PICK zayavka all")
           console.log(App.models.zayavka.attributes)
         },
         show: function (action){
-              console.log(action)
-
+               console.log(action)
+               App.zayavka_form = new Backbone.Form(App.Zayavka_item_form);
                //---fill models data
                App.main_view= new App.MainView();
                App.main_view.addHaveForm();
@@ -220,9 +246,8 @@
     });
 
     App.Have = Backbone.Model.extend({
-        urlRoot: App.baseUrl+"haves/",
+        urlRoot:App.protocol+App.baseUrl+"haves/",
         defaults: {
-            "obj_n":0,
             "room":0,
             "rayon_id":0,
             "street_id":0
@@ -282,7 +307,7 @@
          },
          initialize: function () {
              this.bind("reset", function (model, options) {
-                 console.log("Inside event");
+                 console.log("InfoSources Inside event");
                  console.log(model);
 
                  });
@@ -315,6 +340,21 @@
      });
      App.Rayons = Backbone.Collection.extend({
          url:"http://"+App.baseUrl+"rayons/",
+         setStreet: function(dom_id,code_rayon,code_street) {
+             App.collections.streets.getStreetsInRayon(code_rayon).done(function (res){
+                 var select_items=App.collections.streets.getSelectOptions();
+                 var options_html="",selected_str="";
+                 for (item in select_items){
+                     if (select_items[item].val == code_street){
+                              selected_str="selected"
+                     } else { selected_str="";}
+                     options_html= options_html+"<option "+selected_str+" value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
+                 }
+                 //console.log(options_html)
+                 //console.log("setStreet code_street="+code_street+" dom_id="+dom_id)
+                 $(dom_id).html(options_html);
+             })
+         }
      });
      App.Streets = Backbone.Collection.extend({
          rayon_id:0,
@@ -324,41 +364,30 @@
              //--common cmb
              this.rayon_id=rayon_id;
              this.url="http://"+App.baseUrl+"streets/inrayon/" + String(this.rayon_id)
-             console.log("this.url="+this.url+" this.rayon_id="+this.rayon_id)
+             //console.log("this.url="+this.url+" this.rayon_id="+this.rayon_id)
              var streets_list=this.fetch();
              return streets_list;
-             //---multiselect cmp
-             //$("#wish-from-cmb-"+index).combogrid({
-                //panelWidth:400,
-                //value:'Object',
-                //idField:'id',
-                //textField:'name',
-                //rows: [{"id":1,"name":"Object"},{"id":2,"name":"Price"}],
-                // //url: App.baseUrl+'HaveFields.json',
-                // columns:[[
-                // {field:'ck',checkbox:true},
-                // {field:'id',title:'id',width:60},
-                // {field:'name',title:'Field',width:60}
-//               ]]
-//            });
+
          }
      });
      App.Haves = Backbone.Collection.extend({
-           model: App.Have
+         urlRoot:App.protocol+App.baseUrl+"haves/",
+         model: App.Have
      });
      App.Wants = Backbone.Collection.extend({
         model: App.Want
      });
 
     //-----------------FORMS---------------------------------
-    App.zayavka_form = new Backbone.Form({
+    //App.zayavka_form = new Backbone.Form({
+    App.Zayavka_item_form = {
         //fields: ['id','created_at','updated_at','name','tel_1'],
         initialize: function(){
            //this.schema=this.setFormSchema();
         },
         idPrefix:"z-",
         model:  App.models.zayavka,
-        schema:(App.action=="new")?
+        schema:
                 {
                     id:    {type:'Number',template:'field'},
                     name:  {type:'Text',template:'field',validators: ['required']},
@@ -374,16 +403,9 @@
 
                     published: {type: 'Checkbox',template:'field_br'}
 
-                }:(App.action=="show")?
-                {
+                }
 
-                }:(App.action=="update")?
-                {
-
-                }:{id:'Number',name:'Text'}
-
-
-    });//.render();
+    };//.render();
      //---------------Have Item form-------------------------
      //App.Have_item_form = Backbone.Form({
      App.Have_item_form = {
@@ -392,7 +414,7 @@
              this.idPrefix="hh-"+cur_n+"-";
          },
          idPrefix:"hh-",
-         model: App.models.haves,
+//         model: App.models.haves,
          schema:{
              obj_id: { type: 'Select',options:["111","222"],template:'field'},
              room: {type:'Number',template:'field'},
@@ -416,7 +438,7 @@
              state_id:  {type:'Select',options:[],template:'field'},
              year: {type:'Number',template:'field'},
 
-             tel:{type:'Text',template:'field_br'},
+             tel_1:{type:'Text',template:'field_br'},
              dop:{type:'TextArea',template:'field_br'},
 
 
@@ -475,17 +497,64 @@
           "haveFormShow":"addHaveForm"
         },
         initZayavkaEvents:function(){
-            if (App.action="new"){
+            $("#z-created_at,#z-updated_at").attr({"disabled":"disabled","placeholder":"today"})
+            if (App.action=="new"){
                 $("#zayavka_save").click(function(){App.models.zayavka.zayavkaSave();});
                 $("#z-id").attr({"disabled":"disabled","placeholder":0})
-                $("#z-created_at,#z-updated_at").attr({"disabled":"disabled","placeholder":"today"})
                 $("#z-published").val(1).attr("checked",1);
             }
-            if (App.action in ["view","update"]){
-                App.main_view.bindFormAttributes("zayavka");
+            if ((App.action=="view") || (App.action=="edit")){
+                $("#zayavka_save_btn").remove();
+                $("#z-id").attr({"disabled":"disabled","placeholder":App.models.zayavka.attributes.id})
+                this.bindZayavkaFormAttributes();
+                this.bindHavesFormAttributes();
+                this.bindWantsFormAttributes();
             }
         },
-        bindFormAttributes:function(name){
+
+        bindZayavkaFormAttributes:function(){
+            var model_fields=App.models.zayavka.zayavka_fields
+            var model_attr=App.models.zayavka.attributes
+            for (var i=0; i<model_fields.length;i++){
+                var field_name=model_fields[i]
+                var el=$("#z-"+field_name);
+                if ((el.prop("type")=="checkbox")&&(model_attr[field_name] ==1)){
+                     el.prop("checked",true)
+                }
+                el.val(model_attr[field_name]);
+            }
+        },
+        bindHavesFormAttributes:function(){
+            var tbs_l=App.collections.haves.length;
+            if (tbs_l>1){
+                for (var i=1;i<tbs_l;i++){
+                    //$('#tbs-haves').tabs()
+                    App.main_view.addHaveTab();
+                }
+                $('#tbs-haves').tabs("select",0)
+            }
+            for (var i=0;i<tbs_l;i++){
+                var rec=App.collections.haves.at(i).attributes;
+                for (var field in rec){
+                    var value=rec[field]
+                    if (value == ""){continue;}
+                    var el=$("#hh-"+i+"-"+field)
+                    if ((el.prop("type")=="checkbox")&&(value ==1)){
+                        el.prop("checked",true)
+                    }
+                    el.val(value)
+                    //---rayon--street
+                    if (field=="rayon_id"){
+                        var rayon_dom_id="#hh-"+i+"-street_id";
+                        var code_rayon=value;
+                        log("rayon_dom_id="+rayon_dom_id)
+                        App.collections.rayons.setStreet(rayon_dom_id,code_rayon,rec.street_id)
+                    }
+                }
+
+            }
+        },
+        bindWantsFormAttributes:function(){
 
         },
         setHaveTabTitle:function(index){
@@ -507,7 +576,7 @@
                 iconCls:'icon-add',
                 handler:function(){
                     if (tabs_name=="have"){
-                        App.main_view.addHaveTab();
+                        App.main_view.addHaveTab('icon-add');
                     }
                     if (tabs_name=="want"){
                         App.main_view.addWantTab();
@@ -517,19 +586,55 @@
             var tool_save={
                 iconCls:'icon-save',
                 handler:function(){
-                    confirm('save?')
+                    if (confirm('save?')==true) {
+                        App.models.zayavka.pickAttributes('have');
+                        var tab_index=App.main_view.cur_have_item;
+                        if (App.collections.haves.models[tab_index].attributes.zayavka_id ==undefined) {
+                            App.collections.haves.models[tab_index].attributes.zayavka_id=App.zayavka_id;
+                        }
+                        App.collections.haves.models[tab_index].save()
+                                .error(
+                                function(e){
+                                    console.log(e)
+                                    alert('Error:'+e.responseText+'\n'+e.statue);
+                                })
+                                .success(
+                                function(e){
+                                    console.log(e)
+                                    alert('Saved!')
+                                });
+
+                    }
+
                 }
             };
             var tool_remove={
                 iconCls:'icon-remove',
                 handler:function(){
-                    confirm('remove?')
+                    var index=App.main_view.cur_have_item
+                    if (confirm('remove id='+App.collections.haves.models[index].get("id")+" index="+App.main_view.cur_have_item)==true){
+                        $("#tbs-haves").tabs("close",App.main_view.cur_have_item);
+
+                        $.ajax({
+                            type: "DELETE",
+                            url: App.collections.haves.models[index].urlRoot+App.collections.haves.models[index].get("id")
+
+                        }).done(function( msg ) {
+                                    alert( "Data Deleted: " + msg );
+                                    delete App.collections.haves.models[index];
+                                }).fail(function(jqXHR, textStatus) {
+                                    alert( "Error delete: " + textStatus );
+                                });;
+//                        App.collections.haves.models[App.main_view.cur_have_item].destroy()
+//                                .success(function(e){alert("Deleted...")})
+//                                .error(function(e){alert("Error delete "+ e.statusText)})
+                    }
                 }
             };
             if (App.action=="new"){
                 return [tool_add,tool_remove];
             }
-            if (App.action=="update"){
+            if (App.action=="edit"){
                 return [tool_add,tool_remove,tool_save,tool_help];
             }
             if (App.action=="view"){
@@ -542,46 +647,73 @@
             return (index);
         },
         initHaveEvents:function (index) {
-            //----event set-----------------------
-           console.log("initHaveEvents index="+index)
+            if  (App.collections.haves.models[index]==undefined) {
+                 App.collections.haves.models[index]=new App.Have();
+            }
+            var model_cur = App.collections.haves.models[index]
+            var fields    = App.forms.have_arr[index].fields
+            App.main_view.correctHaveCSS(index);
+            //----UI field change-replace----------------------------------
+            $("#hh-"+index+"-room").numberspinner({
+                onChange: function(value){
+                    //console.log("room="+value);
+                    model_cur.attributes.room=value;
+                },
+                min: 1,max: 100,editable: true});
+            $("#hh-"+index+"-floor, #hh-"+index+"-floor_house").numberspinner({
+                onChange: function(value){
+                    console.log("field="+$(this).attr("numberboxname")+"floor="+value);
+                    model_cur.attributes[""+$(this).attr("numberboxname")]=value;
+                },
+                min: 1,max: 100, editable: true});
+            $("#hh-"+index+"-year").numberspinner({
+                onChange: function(value){
+                    //console.log("year="+value);
+                    model_cur.attributes.year=value;
+                },
+                min: 1900,max: 2050, editable: true});
+            //----CHANGE EVENT SET------Link Form Field with Model-----------------
+            for( var field in fields){
+                if (["room","floor_house","year"].indexOf(field)==-1) { //--input field UI only
+                    $("#hh-"+index+"-"+field).on("change",function(e){
+                            //console.log("changed field "+$(this).prop("id")+" value="+$(this).val()+" type="+$(this).prop("type"))
+                            if ($(this).prop("type")=="checkbox") {  //--torg,obmen_want,rent_want
+                                model_cur.attributes[$(this).prop("name")] = $(this).prop("checked")?1:0;
+                            } else {
+                                model_cur.attributes[$(this).prop("name")] = $(this).val();
+                            }
+                        }
+                    )
+                }
+            }
+            console.log("initHaveEvents index="+index)
             $("#hh-"+index+"-rayon_id").on("change",function(e){
                 var tab = $('#tbs-haves').tabs('getSelected');
                 App.main_view.fillStreets();
             });
             $("#hh-"+index+"-obj_id").on("change",function(e){
-
                 var tab = $('#tbs-haves').tabs('getSelected');
                 var new_title=this.options[this.selectedIndex].text;
                 console.log(new_title);
                 $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
 
             });
-            App.main_view.correctHaveCSS(index);
+
 
         },
         correctHaveCSS:function(index){
              //--UI style-------------------------
             $("#hh-"+index+"-room").attr("size",4).css({"font-size":"lage","font-weight":"bold"});
-            $("#hh-"+index+"-room").numberspinner({min: 1,max: 100,editable: true});
             $("#hh-"+index+"-year").attr("size",8);
-            $("#hh-"+index+"-floor").attr("size",4);
-            $("#hh-"+index+"-floor_house").attr("size",4);
-            $("#hh-"+index+"-floor, #hh-"+index+"-floor_house").numberspinner({min: 1,max: 100, editable: true});
-            $("#hh-"+index+"-year").numberspinner({min: 1900,max: 2050, editable: true});
+            $("#hh-"+index+"-floor,"+"#hh-"+index+"-floor_house").attr("size",4);
              //--css correct-----------------------
              $(".bbf-field").css("margin","5px");
              $("#hh-"+index+"-price_estimate").attr("size",8).css("color","red");
              $("#hh-"+index+"-price_want").attr("size",8).css("color","green");
-             $("#hh-"+index+"-house_n").attr("size",8);
-             $("#hh-"+index+"-flat_n").attr("size",8);
+             $("#hh-"+index+"-house_n,"+"#hh-"+index+"-flat_n").attr("size",8);
+             $("#hh-"+index+"-s_all,"+"#hh-"+index+"-s_live,"+"#hh-"+index+"-s_kux").attr("size",4);
+             $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",75);
 
-             $("#hh-"+index+"-s_all").attr("size",4);
-             $("#hh-"+index+"-s_live").attr("size",4);
-             $("#hh-"+index+"-s_kux").attr("size",4);
-
-             $("#hh-"+index+"-orientir").attr("size",75);
-             $("#hh-"+index+"-dop").attr("size",75);
-             $("#hh-"+index+"-tel").attr("size",75);
 
          },
         correctZayavkaCSS:function(){
@@ -602,25 +734,45 @@
                         console.log("getStreetsInRayon");
                         //console.log(result);
                         var select_items=App.collections.streets.getSelectOptions();
-                        console.log(select_items);
+                        //console.log(select_items);
                         options_html="";
                         for (item in select_items){
                             options_html= options_html+"<option value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
                         }
-                        console.log(options_html)
+                        //console.log(options_html)
                         console.log("cur_have_item="+cur_have_item)
                         $("#hh-"+cur_have_item+"-street_id").html(options_html);
                     }
             );
 
         },
-        addHaveTab:function(){
+        addHaveTab:function(target){
 
             this.last_have_item++;
             this.cur_have_item=this.last_have_item;
+            if (this.last_have_item >0){
+
+                //---clear-field values--
+                if ((target=="icon-add")&&(App.action=="edit")) {
+                    //App.collections.haves.models.push(App.collections.haves.models[0]);
+                    App.collections.haves.models.push(new App.Have());
+                    App.collections.haves.models[this.last_have_item].unset("id");
+                    App.collections.haves.models[this.last_have_item].set("zayavka_id",App.zayavka_id);
+                    var fields = App.collections.haves.models[this.last_have_item].attributes;
+                    for (f in fields){
+                        log("New tab: f="+f+" fields[f]="+fields[f])
+                        fields[f]=0
+                    }
+                }
+//                App.collections.haves.add(
+//                        //App.collections.haves.models[0]
+//                       // new App.Have()
+//                        {zayavka_id:App.zayavka_id,id: App.collections.haves.models[0].id}
+//                );
+            }
             var content_new_tab=this.addHaveForm();
             $('#tbs-haves').tabs('add',{
-                title:'New Object',
+                title:'Object',
                 content:content_new_tab,
                 closable:false
 
@@ -634,6 +786,10 @@
             //----set Params----------------------
             App.Have_item_form.setN(this.cur_have_item);
             App.forms.have_arr[this.cur_have_item] = new Backbone.Form(App.Have_item_form);
+
+            App.forms.have_arr[this.cur_have_item].model=App.collections.haves.models[this.cur_have_item]
+
+            App.forms.have_arr[this.cur_have_item].options.model=App.collections.haves.models[this.cur_have_item]
             //Set the templates
             Backbone.Form.setTemplates(App.templates,App.forms.have_arr[this.cur_have_item]);
 
@@ -761,7 +917,8 @@
 
                     //Set the templates
                     Backbone.Form.setTemplates(App.templates,App.forms.zayavka_form);
-
+            //console.log("RENDER "+App.action);
+            //console.log(App.collections.infoSources.getSelectOptions());
                     App.zayavka_form.model=App.models.zayavka;
                     App.zayavka_form.fields=App.models.zayavka.zayavka_fields;
                     App.zayavka_form.schema.info_source_id.options=App.collections.infoSources.getSelectOptions();
@@ -771,8 +928,8 @@
                     if (App.action=="new"){
                         data_tpl={action_new:1,action:"new"}
                     }
-                    if (App.action=="update"){
-                        data_tpl={action_update:1,action:"update"}
+                    if (App.action=="edit"){
+                        data_tpl={action_update:1,action:"edit"}
                     }
 
                     var zayavka_tools_options= HB.compile($("#zayavka_panel_options").html())(data_tpl);
@@ -805,18 +962,7 @@
      //--collections---
     App.collections.infoSources=new  App.InfoSources();
     App.collections.infoSources.reset(eval('<%=@info_sources; %>'.replace(/&quot;/g,'"')));
-//    App.collections.infoSources.fetch(
-//             {
-//                 success: function(response,xhr) {
-//                     console.log("infoSources Inside success");
-//                     console.log(response);
-//                     //App.models.zayavka.show(App.action);
-//                 },
-//                 error: function (errorResponse) {
-//                     console.error("infoSources "+errorResponse)
-//                 }
-//             }
-//    ).done(function(){console.log("DONE!!!")});
+
     App.collections.infoTypes=new App.InfoTypes();
     App.collections.infoTypes.reset(eval('<%=@info_types; %>'.replace(/&quot;/g,'"')));
 
@@ -828,18 +974,25 @@
     App.collections.havefields=new App.HaveFields();
     App.collections.rents=new App.Rents();
 
+     App.collections.haves   =new App.Haves();
+     haves_str=eval('<%=@haves; %>'.replace(/&quot;/g,'"'));
+     App.collections.haves.reset(haves_str);
+
     App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
     App.collections.rayons.reset(eval('<%=@rayons; %>'.replace(/&quot;/g,'"')));
+
     App.collections.havefields.reset(eval('<%=@havefields; %>'.replace(/&quot;/g,'"')));
     App.collections.statuses.reset(eval('<%=@statuses; %>'.replace(/&quot;/g,'"')));
      App.collections.rents.reset(eval('<%=@rents; %>'.replace(/&quot;/g,'"')));
-    //console.log(App.collections.infoSources);
+    //console.log("objs");
+    //console.log(App.collections.objs);
 
     App.models.zayavka = new App.Zayavka();
-    App.models.haves   = new App.Haves();
-    App.models.wants   = new App.Wants();
+    App.models.have   = new App.Have();
+    App.models.want   = new App.Want();
 
+    App.collections.haves.model=App.models.have
 
     App.models.zayavka.show(App.action);
  });//---ready
@@ -847,10 +1000,23 @@
 
 <!--  ******************************TEMPLATES****************************** -->
 <script type="text/x-handlebars-template" id="zayavka_panel_options">
-  {{#ifCond action "update"}}
+  {{#ifCond action "edit"}}
   {
   iconCls:'icon-save',
-  handler:function(){alert('saved!!!')}
+    handler:function(){
+     App.models.zayavka.pickAttributes('zayavka');
+     App.models.zayavka.save()
+        .error(
+            function(e){
+                console.log(e)
+                alert('Error:'+e.responseText+'\n'+e.statue);
+                })
+        .success(
+            function(e){
+                console.log(e)
+                alert('Saved!')
+            })
+            }
   },
   {{/ifCond}}
   {
@@ -892,7 +1058,7 @@
   </table>
 
 
-  <fieldset class="actions">
+  <fieldset id="zayavka_save_btn" class="actions">
   <ol>
     <input type="submit" value="Save zayavka" id="zayavka_save" name="commit">
     <a href="/admin/zayavkas">Cancel</a>
@@ -905,7 +1071,7 @@
  <div style="width:100%;height:100%">
   <!--<input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">-->
    <div id="tbs-haves"  class="easyui-tabs" >
-     <div title="My object" style="padding:10px;background-color:#FFFFDD" >
+     <div title="Object" style="padding:10px;background-color:#FFFFDD" >
        {{one_have_tpl_html}}
      </div>
    </div>
@@ -981,5 +1147,5 @@
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
-<div id="dialog"></div>
+<div id="dd"></div>
 <div id="win"></div>
