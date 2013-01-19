@@ -1,5 +1,6 @@
 ActiveAdmin.register Zayavka do
-  config.sort_order = "id_asc"
+  #config.sort_order = "id_asc"
+  config.sort_order = "id_desc"
   ##config.register_stylesheet 'simpletabs.css'
   menu :parent => "Zayavki", :label => "Zayavki all"
   scope :all, :default => true
@@ -29,6 +30,7 @@ ActiveAdmin.register Zayavka do
   filter :dop
   filter :info_type
   filter :info_source, :label=>"InfoSource",:collection=>proc {InfoSource.all}
+  filter :status
   ##filter :obj_id, :as => :select, :collection => proc { Obj.order('name ASC').map(&:name) }
   ##filter :info_source, :label=>"Agency",:collection=>proc {InfoSource.from_agency}
   ##filter :info_source, :label=>"Peaple",:collection=>proc {InfoSource.from_people}
@@ -41,29 +43,39 @@ ActiveAdmin.register Zayavka do
 
 
   controller do
+   ## befor_filter: "getListsData"
+    def getListData(act)
+      @action=act
+      ##ActiveRecord::Base.include_root_in_json = false
+      @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
+      @zayavka_fields= Zayavka.column_names;
+      @info_sources  = InfoSource.select("id,name").all.to_json
+      @info_types    = InfoType.select("id,name").all.to_json
+      @objs          = Obj.select("id,name").all.to_json
+      @states        = State.select("id,name").all.to_json
+      @statuses      = Status.select("id,name").all.to_json
+      @rayons        = Rayon.select("id,name").where("parent=2775").to_json
+      #@rents         = HaveField.select("id,name,field_list").where("field_name='rent_want'")
+      @dogovor='[{id:1,name:"no",{id:1,name:"excluzive"}}]'
+      @rents = '[{id:1,name:"day"},{id:2,name:"week"},{id:3,name:"1-month"},{id:3,name:"2-3-month"},{id:4,name:"0.5 year"},{id:5,name:"year"}]'
 
+    end
     def edit(options={}, &block)
       @zayavka_id=params[:id]
+      @zayavka=Zayavka.find(@zayavka_id)
+      #@haves=@zayavka.have
+      @haves=Have.where(:zayavka_id=>@zayavka_id).to_json
+      @wants=@zayavka.want
+
+      @zayavka=@zayavka.to_json
+      getListData("edit")
       render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
-      #super do |format|
-      #  block.call(format) if block
-      #  #format.html { render active_admin_template('edit') }
-      #  @cur_id=params[:id]
-      #  #format.html {  render :text=>"Edit member #{params[:id]}"}
-      #  format.html {render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"}
-      #end
+
     end
     def new
         @action="new"
         @zayavka_id=0
-        ##ActiveRecord::Base.include_root_in_json = false
-        @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
-        @zayavka_fields= Zayavka.column_names;
-        @info_sources  = InfoSource.select("id,name").all.to_json
-        @info_types    = InfoType.select("id,name").all.to_json
-        @objs          = Obj.select("id,name").all.to_json
-        @states        = State.select("id,name").all.to_json
-        @rayons        = Rayon.select("id,name").where("parent=2775").to_json
+        getListData("new")
         render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
     end
     def show
@@ -148,9 +160,9 @@ ActiveAdmin.register Zayavka do
   #-------------------------------------------TABLE----------------------
   index :as=>:table do
     column :id
-    column :created_at do |rec|
+    column :created_at, :sortable => :created_at do |rec|
       span rec.created_at.to_date
-      if rec.have[0].obmen_want !=0
+      if rec.have.length>=1 and rec.have[0].obmen_want !=nil and rec.have[0].obmen_want != 0
         br
         span "(obmen)"
       end
@@ -163,7 +175,7 @@ ActiveAdmin.register Zayavka do
         rec.have.each do |h|
           room_str = h.room ==0?"":h.room
           obj_str=h.obj.name if h.obj != nil
-          rayon_str=h.rayon.name+", " if !h.rayon.name.empty?
+          rayon_str=h.rayon.name+", " if h.rayon != nil
           street_str=h.street.name_rus   if h.street != nil
           floor_str=I18n.t('etag')+":"+h.floor.to_s+"/"+h.floor_house.to_s+", "
           s_str='S='+h.s_all.to_s+"/"+h.s_live.to_s+"/"+h.s_kux.to_s+", "
@@ -191,15 +203,15 @@ ActiveAdmin.register Zayavka do
       #out_str
     end
     column :want do |rec|
-      if rec.have[0].sell_want !=0
-        span "sell_want:"+rec.have[0].price_want.to_s
-        br
+      if rec.have.length>=1 and rec.have[0].sell_want !=0
+         span "sell_want:"+rec.have[0].price_want.to_s, :title=>"This is:\n "+(rec.have[0].price_want*8).to_s+" grn"
+         br
       end
       out_str=""
       if !rec.want.empty?
         rec.want.each do |w|
-          if w.obj.id==1 # doplata
-            span (w.obj.name+":"+w.price_want.to_s)  if w.price_want !=0
+          if 1==1 # w.obj.id==1 and v.obj.id != nil # doplata
+            span (w.obj.name+":"+w.price_want.to_s) if w.price_want !=0
           else #objects
             span w.room       if w.room !=0
             span w.obj.name   if w.obj != nil
