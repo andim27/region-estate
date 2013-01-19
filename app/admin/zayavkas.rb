@@ -55,6 +55,7 @@ ActiveAdmin.register Zayavka do
     end
     def new
         @action="new"
+        @zayavka_id=0
         ##ActiveRecord::Base.include_root_in_json = false
         @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
         @zayavka_fields= Zayavka.column_names;
