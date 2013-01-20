@@ -371,10 +371,11 @@
          }
      });
      App.Haves = Backbone.Collection.extend({
-         urlRoot:App.protocol+App.baseUrl+"haves/",
-         model: App.Have
+        urlRoot:App.protocol+App.baseUrl+"haves/",
+        model: App.Have
      });
      App.Wants = Backbone.Collection.extend({
+        urlRoot:App.protocol+App.baseUrl+"wants/",
         model: App.Want
      });
 
@@ -586,48 +587,24 @@
             var tool_save={
                 iconCls:'icon-save',
                 handler:function(){
-                    if (confirm('save?')==true) {
-                        App.models.zayavka.pickAttributes('have');
-                        var tab_index=App.main_view.cur_have_item;
-                        if (App.collections.haves.models[tab_index].attributes.zayavka_id ==undefined) {
-                            App.collections.haves.models[tab_index].attributes.zayavka_id=App.zayavka_id;
-                        }
-                        App.collections.haves.models[tab_index].save()
-                                .error(
-                                function(e){
-                                    console.log(e)
-                                    alert('Error:'+e.responseText+'\n'+e.statue);
-                                })
-                                .success(
-                                function(e){
-                                    console.log(e)
-                                    alert('Saved!')
-                                });
-
+                    if (tabs_name=="have"){
+                        App.main_view.saveHaveTab();
                     }
+                    if (tabs_name=="want"){
+                        App.main_view.saveWantTab();
+                    }
+
 
                 }
             };
             var tool_remove={
                 iconCls:'icon-remove',
                 handler:function(){
-                    var index=App.main_view.cur_have_item
-                    if (confirm('remove id='+App.collections.haves.models[index].get("id")+" index="+App.main_view.cur_have_item)==true){
-                        $("#tbs-haves").tabs("close",App.main_view.cur_have_item);
-
-                        $.ajax({
-                            type: "DELETE",
-                            url: App.collections.haves.models[index].urlRoot+App.collections.haves.models[index].get("id")
-
-                        }).done(function( msg ) {
-                                    alert( "Data Deleted: " + msg );
-                                    delete App.collections.haves.models[index];
-                                }).fail(function(jqXHR, textStatus) {
-                                    alert( "Error delete: " + textStatus );
-                                });;
-//                        App.collections.haves.models[App.main_view.cur_have_item].destroy()
-//                                .success(function(e){alert("Deleted...")})
-//                                .error(function(e){alert("Error delete "+ e.statusText)})
+                    if (tabs_name=="have"){
+                        App.main_view.removeHaveTab();
+                    }
+                    if (tabs_name=="want"){
+                        App.main_view.removeWantTab();
                     }
                 }
             };
@@ -746,6 +723,66 @@
             );
 
         },
+        removeWantTab:function(){
+            var index=App.main_view.cur_want_item
+            var model_cur=App.collections.wants.models[index];
+            if (confirm('Want remove id='+model_cur.get("id")+" index="+App.main_view.cur_want_item)==true){
+                $("#tbs-wants").tabs("close",App.main_view.cur_want_item);
+
+                $.ajax({
+                    type: "DELETE",
+                    url: model_cur.urlRoot+model_cur.get("id")
+
+                }).done(function( msg ) {
+                            alert( "Data Deleted: " + msg );
+                            delete App.collections.wants.models[index];
+                        }).fail(function(jqXHR, textStatus) {
+                            alert( "Error delete: " + textStatus );
+                        });;
+
+            }
+        },
+        removeHaveTab:function(){
+            var index=App.main_view.cur_have_item
+            if (confirm('Have remove id='+App.collections.haves.models[index].get("id")+" index="+App.main_view.cur_have_item)==true){
+                $("#tbs-haves").tabs("close",App.main_view.cur_have_item);
+
+                $.ajax({
+                    type: "DELETE",
+                    url: App.collections.haves.models[index].urlRoot+App.collections.haves.models[index].get("id")
+
+                }).done(function( msg ) {
+                            alert( "Data Deleted: " + msg );
+                            delete App.collections.haves.models[index];
+                        }).fail(function(jqXHR, textStatus) {
+                            alert( "Error delete: " + textStatus );
+                        });;
+//                        App.collections.haves.models[App.main_view.cur_have_item].destroy()
+//                                .success(function(e){alert("Deleted...")})
+//                                .error(function(e){alert("Error delete "+ e.statusText)})
+             }
+        },
+        saveHaveTab:function(){
+            if (confirm('Have save?')==true) {
+                App.models.zayavka.pickAttributes('have');
+                var tab_index=App.main_view.cur_have_item;
+                if (App.collections.haves.models[tab_index].attributes.zayavka_id ==undefined) {
+                    App.collections.haves.models[tab_index].attributes.zayavka_id=App.zayavka_id;
+                }
+                App.collections.haves.models[tab_index].save()
+                        .error(
+                        function(e){
+                            console.log(e)
+                            alert('Error:'+e.responseText+'\n'+e.statue);
+                        })
+                        .success(
+                        function(e){
+                            console.log(e)
+                            alert('Saved!')
+                        });
+
+            }
+        },
         addHaveTab:function(target){
 
             this.last_have_item++;
@@ -764,11 +801,6 @@
                         fields[f]=0
                     }
                 }
-//                App.collections.haves.add(
-//                        //App.collections.haves.models[0]
-//                       // new App.Have()
-//                        {zayavka_id:App.zayavka_id,id: App.collections.haves.models[0].id}
-//                );
             }
             var content_new_tab=this.addHaveForm();
             $('#tbs-haves').tabs('add',{
