@@ -64,9 +64,15 @@ ActiveAdmin.register Zayavka do
       @zayavka_id=params[:id]
       @zayavka=Zayavka.find(@zayavka_id)
       #@haves=@zayavka.have
-      @haves=Have.where(:zayavka_id=>@zayavka_id).to_json
+      @haves=Have.where(:zayavka_id=>@zayavka_id).to_json.html_safe
       @wants=@zayavka.want
+      @wishlists=[]
+      @wants.each do |w|
+        @wishlists.push(w.wish_list)
+      end
+      @wishlists=@wishlists.to_json.html_safe
 
+      @wants=@wants.to_json
       @zayavka=@zayavka.to_json
       getListData("edit")
       render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
@@ -187,17 +193,16 @@ ActiveAdmin.register Zayavka do
             span obj_str
             span rayon_str
             span street_str
-            br
             span floor_str
+            br
             span s_str
             if h.sell_want != 0
               br span "(sel_want:"+h.price_want.to_s+" )"
             end
-            br
             a "more...", :href=>"javascript:alert('more...#{h.id}');"
             hr if h.variant_cnt >1
           end
-          br
+
         end
       end
       #out_str
