@@ -265,7 +265,7 @@
     });
     //--------attributes models------------
      App.Wishlist = Backbone.Model.extend({
-
+         urlRoot:App.protocol+App.baseUrl+"wish_lists/"
      });
      App.Contact = Backbone.Model.extend({
 
@@ -385,7 +385,7 @@
         model: App.Want
      });
      App.Wishlists = Backbone.Collection.extend({
-         urlRoot:App.protocol+App.baseUrl+"wishlists/",
+         urlRoot:App.protocol+App.baseUrl+"wish_lists/",
          model: App.Wishlist,
          setToModel:function(dom_id){
              var index=App.main_view.cur_want_item;
@@ -794,6 +794,22 @@
 
             }
         },
+        saveWantTab:function(){
+            if (confirm('Wish save?')==true) {
+                var tab_index=App.main_view.cur_want_item;
+                App.collections.wishlists.models[tab_index].save()
+                        .error(
+                        function(e){
+                            console.log(e)
+                            alert('Error:'+e.responseText+'\n'+e.statue);
+                        })
+                        .success(
+                        function(e){
+                            console.log(e)
+                            alert('Saved!')
+                        });
+            }
+        },
         removeHaveTab:function(){
             var index=App.main_view.cur_have_item
             if (confirm('Have remove id='+App.collections.haves.models[index].get("id")+" index="+App.main_view.cur_have_item)==true){
@@ -940,9 +956,12 @@
                               iconCls:'icon-add',
                               handler:function(){
                                   var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
-                                  var cur_want_id= App.collections.wishlists.models[App.main_view.cur_want_item].attributes[0]["want_id"];
+                                  //var cur_want_id= App.collections.wishlists.models[App.main_view.cur_want_item].attributes[0]["want_id"];
                                   var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
-                                  App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={want_id:cur_want_id,field_cond:"",field_name:"",field_value:"",variant:cur_variant}
+                                  if (last_index <=0) {//--add model when empty wishlist
+                                      App.collections.wishlists.models.push(new App.Wishlist());//{field_cond:"",field_name:"",field_value:"",variant:cur_variant}
+                                  }
+                                  App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,zayavka_id:App.zayavka_id}
                                   App.main_view.addWishAttribContent();
                               }
                           }]
@@ -1012,6 +1031,9 @@
             //----ADD first bind EVENT for linked fields---
             if (field=="obj_id"){
                 $("#"+id_str).on("change",function(e){
+                    var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
+                    var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
+                    App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"",field_name:"",field_value:"",variant:cur_variant,zayavka_id:App.zayavka_id}
                     var obj_code=$(this).val()
                     if (obj_code == 1){//---money
                         App.main_view.addWishAttribContent('price_want','Price');
@@ -1123,7 +1145,7 @@
     App.collections.statuses=new App.Statuses();
     App.collections.havefields=new App.HaveFields();
     App.collections.rents=new App.Rents();
-    App.collections.wishlists=new App.Wishlists();
+    App.collections.wishlists=new App.Wishlists({zayavka_id:App.zayavka_id});
 
      App.collections.haves   =new App.Haves();
      haves_str=eval('<%=@haves; %>'.replace(/&quot;/g,'"'));
@@ -1133,7 +1155,8 @@
      wants_str=eval('<%=@wants; %>'.replace(/&quot;/g,'"'));
      App.collections.wants.reset(wants_str);
 
-     App.collections.wishlists.reset(eval('<%=@wishlists; %>'.replace(/&quot;/g,'"')));
+     wl_str=eval('<%=@wishlists; %>'.replace(/&quot;/g,'"'))
+     App.collections.wishlists.reset(wl_str);
 
     App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
