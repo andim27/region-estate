@@ -1,4 +1,6 @@
 Estate::Application.routes.draw do
+  resources :have_fields
+
   ActiveAdmin.routes(self)
 
   devise_for :admin_users, ActiveAdmin::Devise.config
@@ -7,9 +9,13 @@ Estate::Application.routes.draw do
   resources :info_sources
   resources :info_types
   resources :rayons
+  resources :zayavkas
   resources :haves
   resources :wants
+  resources :wish_lists
+  resources :HaveFields
 
+  #match 'zayavkas' => 'zayavkas#create', :via => :put
   match 'streets/inrayon/:id' => 'streets#inrayon'
   #match 'admin/rayons_geo/:action' => 'admin/rayons_geo', :action => /w+/
 
