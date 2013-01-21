@@ -21,6 +21,9 @@
                 protocol:"http://",
                 baseUrl:"<%= request.env["HTTP_HOST"]; %>/"
     };
+    App.setCond=function(cond){
+        return cond.replace(/&gt;/,">").replace(/&lt;/,"<")
+    };
     HB.registerHelper('ifCond', function(v1, v2, options) {
          if(v1 == v2) {
              return options.fn(this);
@@ -254,9 +257,16 @@
         }
     });
     App.Want = Backbone.Model.extend({
-
+        urlRoot:App.protocol+App.baseUrl+"wants/",
+        defaults: {
+            "obj_id":0,
+            "price_want":0
+        }
     });
     //--------attributes models------------
+     App.Wishlist = Backbone.Model.extend({
+
+     });
      App.Contact = Backbone.Model.extend({
 
      });
@@ -293,8 +303,6 @@
              out_str=out_str+"<option value='"+value_str+"'>"+this.models[i].attributes.name+"</option>";
 
          }
-         console.log("out_str="+out_str);
-         console.log("dom_id="+dom_id);
          $("#"+dom_id).html(out_str);
      }
      //---------collection CLASS---------------------------------------
@@ -350,8 +358,6 @@
                      } else { selected_str="";}
                      options_html= options_html+"<option "+selected_str+" value='"+select_items[item].val+"'>"+select_items[item].label+"</option>"
                  }
-                 //console.log(options_html)
-                 //console.log("setStreet code_street="+code_street+" dom_id="+dom_id)
                  $(dom_id).html(options_html);
              })
          }
@@ -377,6 +383,33 @@
      App.Wants = Backbone.Collection.extend({
         urlRoot:App.protocol+App.baseUrl+"wants/",
         model: App.Want
+     });
+     App.Wishlists = Backbone.Collection.extend({
+         urlRoot:App.protocol+App.baseUrl+"wishlists/",
+         model: App.Wishlist,
+         setToModel:function(dom_id){
+             var index=App.main_view.cur_want_item;
+             var field_name=$("#"+dom_id).attr("id").split("-").pop();
+             var field_value=$("#"+dom_id).val();
+             var row_id = $("#"+dom_id).attr("row_id");
+             console.log("BIND TO MODEL dom_id="+dom_id);
+             console.log("BIND TO MODEL name="+field_name);
+             console.log("BIND TO MODEL val="+field_value);
+             console.log("setToModel index="+index+" field="+field_name+" value="+field_value+" row_id="+row_id);
+
+             var rows=this.models[index].attributes;
+             if (dom_id.search(/-cond-/) != -1){//---data from COND FIELD
+                 rows[row_id]['field_cond']=field_value
+             }else {
+                if (rows[row_id]['field_name'] == field_name) {
+                   rows[row_id]['field_value']=field_value
+                } else {//--add from panel
+                    rows[row_id]['field_name']=field_name
+                    rows[row_id]['field_value']=field_value
+                }
+             }
+
+         }
      });
 
     //-----------------FORMS---------------------------------
@@ -481,11 +514,13 @@
      App.MainView = Backbone.View.extend({
         id:'#zayavka-tpl',
         wi:0,
+        wish_rows:[],
         cur_have_item:0,
         cur_want_item:0,
         last_have_item:0,
         last_want_item:0,
         initialize: function(){
+            this.wish_rows[0]=0
             //---change template tags
            /// this.on("haveFormShow",this.addHaveForm,this);
             _.templateSettings = {
@@ -529,7 +564,6 @@
             var tbs_l=App.collections.haves.length;
             if (tbs_l>1){
                 for (var i=1;i<tbs_l;i++){
-                    //$('#tbs-haves').tabs()
                     App.main_view.addHaveTab();
                 }
                 $('#tbs-haves').tabs("select",0)
@@ -556,6 +590,25 @@
             }
         },
         bindWantsFormAttributes:function(){
+            var tbs_l=App.collections.wants.length;
+            if (tbs_l>1){
+                for (var i=1;i<tbs_l;i++){
+                    App.main_view.addWantTab();
+                }
+            }
+            for (var i=0;i<tbs_l;i++){
+                App.main_view.cur_want_item=i;
+                var fields = App.collections.wishlists.models[i].attributes;//---!!!---
+                for (var f in fields){
+                    console.log("bindWantsFormAttributes")
+                    console.log(f)
+                    console.log(fields[f])
+                    var params_set={field_value:fields[f]['field_value'],field_cond:App.setCond(fields[f]['field_cond'])};//---SET VALUE FROM MODEL
+                    App.main_view.addWishAttribContent(fields[f]['field_name'],fields[f]['field_name'],params_set);
+
+                }
+            }
+            $('#tbs-wants').tabs("select",0);
 
         },
         setHaveTabTitle:function(index){
@@ -580,7 +633,7 @@
                         App.main_view.addHaveTab('icon-add');
                     }
                     if (tabs_name=="want"){
-                        App.main_view.addWantTab();
+                        App.main_view.addWantTab('icon-add');
                     }
                 }
             };
@@ -690,7 +743,6 @@
              $("#hh-"+index+"-house_n,"+"#hh-"+index+"-flat_n").attr("size",8);
              $("#hh-"+index+"-s_all,"+"#hh-"+index+"-s_live,"+"#hh-"+index+"-s_kux").attr("size",4);
              $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",75);
-
 
          },
         correctZayavkaCSS:function(){
@@ -838,19 +890,20 @@
             return one_have_tpl_html;
         },
         initWantEvents:function (index) {
-             this.showWantPanels(index);
+            this.showWantPanels(index);
+            if (App.action=="new") {
+                App.main_view.addWishAttribContent('obj_id','Object');
+            }
         },
         addWantForm: function(){
-
             var want_item_html   ="";
             var one_want_tpl_html= _.template( $("#one-want-tpl").html(), {n:this.last_want_item,want_item_html:want_item_html} );
             return one_want_tpl_html;
         },
-        addWantTab:function(){
-            //$("#li-want-"+this.cur_want_item).removeClass("active");
+        addWantTab:function(target){
             this.last_want_item++;
-            var content_new_tab=this.addWantForm();//"<div class=fon-yellow>"+'Tab Body '+this.last_want_item+"<br></div>"
-
+            this.cur_want_item=this.last_want_item;
+            var content_new_tab=this.addWantForm();
             $('#tbs-wants').tabs('add',{
                 width: "500px",
                 height: "auto",
@@ -859,6 +912,18 @@
                 closable:false
 
             });
+            if ((App.action=="edit")&&(target=="icon-add")){
+                App.collections.wants.models.push(new App.Want());
+                App.collections.wants.models[this.last_want_item].set("zayavka_id",App.zayavka_id);
+                //---clear-field values--
+                if ((target=="icon-add")) {
+
+                    App.collections.wants.models[this.last_want_item].unset("id");
+
+                }
+            }
+
+            this.wish_rows[this.cur_want_item]=0;
             this.cur_want_item=this.last_want_item;
         },
         showWantPanels:function(index){
@@ -873,7 +938,13 @@
                           content:content_html,
                           tools: [{
                               iconCls:'icon-add',
-                              handler:function(){App.main_view.addWishAttribContent();}
+                              handler:function(){
+                                  var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
+                                  var cur_want_id= App.collections.wishlists.models[App.main_view.cur_want_item].attributes[0]["want_id"];
+                                  var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
+                                  App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={want_id:cur_want_id,field_cond:"",field_name:"",field_value:"",variant:cur_variant}
+                                  App.main_view.addWishAttribContent();
+                              }
                           }]
                       }
             );
@@ -888,11 +959,17 @@
             App.collections.havefields.fillHtmlSelect("wish-from-cmb-"+index,'field_name');
 
         },
-        addWishAttribContent:function(){
+        addWishAttribContent:function(param_field,param_field_name,params_set){
+            var field,field_name;
             //--compile tpl
             var index= this.cur_want_item;
-            var field      = $("#wish-from-cmb-"+index+" option:selected").val();
-            var field_name = $("#wish-from-cmb-"+index+" option:selected").text();
+            if (param_field != undefined) {
+                field      = param_field
+                field_name = param_field_name
+            } else {
+                field      = $("#wish-from-cmb-"+index+" option:selected").val();
+                field_name = $("#wish-from-cmb-"+index+" option:selected").text();
+            }
             var field_html ="";
 
             field_name="<label>"+field_name+"</label><input disabled type='hidden' id='wi-"+this.wi+"-tb-"+index+"-wishlist-field_name' value='"+field+"' />"
@@ -903,18 +980,26 @@
             var hf_arr=App.collections.havefields.where({'field_name':field});
             var field_ui_type=hf_arr[0].attributes.field_ui_type;
             var id_str="wi-"+this.wi+"-tb-"+index+"-wishlist-"+field;
+            var cond_id="wi-"+this.wi+"-tb-"+index+"-wishlist-cond-"+field
+            var row_id_str="row_id="+this.wish_rows[index];
+            var field_attr_row_id = '$(this).attr("row_id")';
+            var spiner_to_model_str="App.collections.wishlists.setToModel("+'"'+id_str+'"'+");";
+            var spiner_on_change_str="onChange:function(val){"+spiner_to_model_str+"}";
+
             if (field_ui_type == 'select') {
-                field_html ="<select id='"+id_str+"'><option value=0>Select value...</option></select>";
+                field_html ="<select id='"+id_str+"' "+row_id_str+"><option value=0>Select value...</option></select>";
             }
             if (field_ui_type == 'input') {
-                field_html ="<input id='"+id_str+"' type='text' size='10' />";
+                field_html ="<input id='"+id_str+"' type='text' size='10' "+row_id_str+" />";
             }
             if (field_ui_type == 'spinner') {
-                field_html="<input id='"+id_str+"' class='easyui-numberspinner' data-options='min:1,max:100,required:true' />"
+                field_html="<input id='"+id_str+"' class='easyui-numberspinner' data-options='min:1,max:100,required:true,"+spiner_on_change_str+"' "+row_id_str+" />"
             }
-            var wish_f_tpl = _.template ($("#wish-field-content").html(),{n:index,wi:this.wi,field:field,field_name:field_name,field_html:field_html});
+            var wish_f_tpl = _.template ($("#wish-field-content").html(),{n:index,wi:this.wi,row_id:this.wish_rows[index],field:field,field_name:field_name,field_html:field_html});
             //--ad to content panel
             $("#wish-attrib-content-"+index).append(wish_f_tpl);
+
+
             //---UI-LINK-pars--------------------
             if (field_ui_type == 'spinner'){
                 $.parser.parse('#wish-attrib-content-'+index);
@@ -924,7 +1009,40 @@
             if (field_html.search(/select/) != -1){
                 this.fillWishSelectField(field,index, this.wi);
             }
+            //----ADD first bind EVENT for linked fields---
+            if (field=="obj_id"){
+                $("#"+id_str).on("change",function(e){
+                    var obj_code=$(this).val()
+                    if (obj_code == 1){//---money
+                        App.main_view.addWishAttribContent('price_want','Price');
+                    }
+                    if ((obj_code == 2)||(obj_code == 3)||(obj_code == 4)){//---kvartirs
+                        App.main_view.addWishAttribContent('room','Room');
+                    }
+                })
+            }
+            //---bind Attr from FORM to MODEL
+
+            $("#"+cond_id).on("change",function(e){
+                var dom_id=$(this).attr("id")
+                console.log("BIND TO MODEL id="+dom_id);
+                App.collections.wishlists.setToModel(dom_id)
+            });
+            $("#"+id_str).on("change",function(e){
+                var dom_id=$(this).attr("id");
+                App.collections.wishlists.setToModel(dom_id)
+            });
+            //---EDIT bind VALUE for edit-view action
+            if (params_set != undefined) {
+                console.log("params_set id_str="+id_str)
+                console.log("params_set cond_id="+cond_id)
+                console.log("params_set field_value="+params_set.field_value)
+                console.log("params_set params_set.field_cond="+params_set.field_cond)
+                $("#"+id_str).val(params_set.field_value)
+                $("#"+cond_id).val(params_set.field_cond)
+            }
             this.wi++;
+            this.wish_rows[index]++;
         },
         delWishFieldContent: function(field,index,wi) {
             $("#wi-"+wi+"-tb-"+index+"-wish-field-"+field+"-content").remove();
@@ -1005,10 +1123,17 @@
     App.collections.statuses=new App.Statuses();
     App.collections.havefields=new App.HaveFields();
     App.collections.rents=new App.Rents();
+    App.collections.wishlists=new App.Wishlists();
 
      App.collections.haves   =new App.Haves();
      haves_str=eval('<%=@haves; %>'.replace(/&quot;/g,'"'));
      App.collections.haves.reset(haves_str);
+
+     App.collections.wants   =new App.Wants();
+     wants_str=eval('<%=@wants; %>'.replace(/&quot;/g,'"'));
+     App.collections.wants.reset(wants_str);
+
+     App.collections.wishlists.reset(eval('<%=@wishlists; %>'.replace(/&quot;/g,'"')));
 
     App.collections.objs.reset(eval('<%=@objs; %>'.replace(/&quot;/g,'"')));
     App.collections.states.reset(eval('<%=@states; %>'.replace(/&quot;/g,'"')));
@@ -1020,11 +1145,13 @@
     //console.log("objs");
     //console.log(App.collections.objs);
 
-    App.models.zayavka = new App.Zayavka();
-    App.models.have   = new App.Have();
-    App.models.want   = new App.Want();
+    App.models.zayavka  = new App.Zayavka();
+    App.models.have     = new App.Have();
+    App.models.want     = new App.Want();
+    App.models.wishlist = new App.Wishlist();
 
     App.collections.haves.model=App.models.have
+    App.collections.wants.model=App.models.want
 
     App.models.zayavka.show(App.action);
  });//---ready
@@ -1159,7 +1286,7 @@
      <tr>
        <td width='20%'>{{field_name}}</td>
        <td width='30%'>
-         <select id="tb-{{n}}-wishlist-cond-{{field}}">
+         <select id="wi-{{wi}}-tb-{{n}}-wishlist-cond-{{field}}" row_id='{{row_id}}'>
          <option value="=" selected>Равно</option>
          <option value="<>">Не равно</option>
          <option value=">=">Больше или равно</option>
