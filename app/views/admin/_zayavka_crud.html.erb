@@ -211,6 +211,9 @@
                        onAdd:function(title,index){
                            console.log("onAdd "+index)
                            App.main_view.initHaveEvents(index);
+                           if (index==0){
+                               $('#tbs-haves span.tabs-title')[0].textContent=App.main_view.getHaveTabTitle();
+                           }
 
                        },
                        onSelect:function(title,index){
@@ -392,12 +395,14 @@
              var field_name=$("#"+dom_id).attr("id").split("-").pop();
              var field_value=$("#"+dom_id).val();
              var row_id = $("#"+dom_id).attr("row_id");
+             var rows=this.models[index].attributes;
+             console.log("BIND TO MODEL rows="+rows);
              console.log("BIND TO MODEL dom_id="+dom_id);
              console.log("BIND TO MODEL name="+field_name);
              console.log("BIND TO MODEL val="+field_value);
              console.log("setToModel index="+index+" field="+field_name+" value="+field_value+" row_id="+row_id);
 
-             var rows=this.models[index].attributes;
+
              if (dom_id.search(/-cond-/) != -1){//---data from COND FIELD
                  rows[row_id]['field_cond']=field_value
              }else {
@@ -586,7 +591,9 @@
                         App.collections.rayons.setStreet(rayon_dom_id,code_rayon,rec.street_id)
                     }
                 }
-
+                if (i==0){
+                    $('#tbs-haves span.tabs-title')[0].textContent=App.main_view.getHaveTabTitle();
+                }
             }
         },
         bindWantsFormAttributes:function(){
@@ -603,10 +610,15 @@
                     console.log("bindWantsFormAttributes")
                     console.log(f)
                     console.log(fields[f])
+                    var variant_val=(fields[f]['variant']==true)?1:fields[f]['variant']
+                    $("#wish-variant-"+i).val(variant_val);
                     var params_set={field_value:fields[f]['field_value'],field_cond:App.setCond(fields[f]['field_cond'])};//---SET VALUE FROM MODEL
                     App.main_view.addWishAttribContent(fields[f]['field_name'],fields[f]['field_name'],params_set);
 
                 }
+                //if (i==0){
+                    $('#tbs-wants span.tabs-title')[i].textContent=App.main_view.getWantTabTitle();
+                //}
             }
             $('#tbs-wants').tabs("select",0);
 
@@ -675,6 +687,11 @@
             var tab = $('#tbs-haves').tabs('getSelected');
             var index = $('#tbs-haves').tabs('getTabIndex',tab);
             return (index);
+        },
+        getWantTabIndex:function () {
+             var tab = $('#tbs-wants').tabs('getSelected');
+             var index = $('#tbs-wants').tabs('getTabIndex',tab);
+             return (index);
         },
         initHaveEvents:function (index) {
             if  (App.collections.haves.models[index]==undefined) {
@@ -810,6 +827,40 @@
                         });
             }
         },
+        getWantTabTitle:function(){
+             var title="Wish"
+             if ((App.action=="edit")|| (App.action=="view")){
+                 var index  = App.main_view.cur_want_item
+                 var obj_id = App.collections.wants.models[index].get("obj_id")
+                 var room = App.collections.wants.models[index].get("room")
+                 if (([2,3,4,5,6,7,8,9,10].indexOf(obj_id) != -1) &&(room != undefined)) {
+                     //--room+flat
+                     title=room+"-ком,"+App.collections.objs.where({id:obj_id})[0].get("name")
+                 } else {
+                     title=App.collections.objs.where({id:obj_id})[0].get("name")
+                 }
+             }
+             return title;
+        },
+        getHaveTabTitle:function(){
+            var title="Object"
+            if ((App.action=="edit")|| (App.action=="view")){
+               try {
+                var index  = App.main_view.cur_have_item
+                var obj_id = App.collections.haves.models[index].get("obj_id")
+                var room = App.collections.haves.models[index].get("room")
+                if ([2,3,4,5,6,7,8,9,10].indexOf(obj_id) != -1) {
+                    //--room+flat
+                    title=room+"-ком,"+App.collections.objs.where({id:obj_id})[0].get("name")
+                } else {
+                    title=App.collections.objs.where({id:obj_id})[0].get("name")
+                }
+               } catch (e){
+                   log("ERROR getHaveTabTitle "+e)
+               }
+            }
+            return title;
+        },
         removeHaveTab:function(){
             var index=App.main_view.cur_have_item
             if (confirm('Have remove id='+App.collections.haves.models[index].get("id")+" index="+App.main_view.cur_have_item)==true){
@@ -872,7 +923,7 @@
             }
             var content_new_tab=this.addHaveForm();
             $('#tbs-haves').tabs('add',{
-                title:'Object',
+                title:this.getHaveTabTitle(),
                 content:content_new_tab,
                 closable:false
 
@@ -956,13 +1007,10 @@
                           tools: [{
                               iconCls:'icon-add',
                               handler:function(){
-                                  var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
-                                  //var cur_want_id= App.collections.wishlists.models[App.main_view.cur_want_item].attributes[0]["want_id"];
-                                  var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
-                                  if ((last_index <=0)||(App.collections.wishlists.models.length == 0)) {//--add model when empty wishlist
-                                      App.collections.wishlists.models.push(new App.Wishlist());//{field_cond:"",field_name:"",field_value:"",variant:cur_variant}
-                                  }
-                                  App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,zayavka_id:App.zayavka_id}
+                                  //var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
+                                  //var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
+                                  //App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,want_cnt:App.main_view.cur_want_item,zayavka_id:App.zayavka_id}
+                                  App.main_view.insertWishAttribRow();
                                   App.main_view.addWishAttribContent();
                               }
                           }]
@@ -972,12 +1020,31 @@
             $("#wish-variant-"+index).numberspinner({
                 min: 1,
                 max: 4,
+                value:1,
                 editable: true
             });
             //--set combobox-grid
             //App.collections.havefields.fillWishFromCmb(index)
             App.collections.havefields.fillHtmlSelect("wish-from-cmb-"+index,'field_name');
 
+        },
+        insertWishAttribRow:function(){
+            var wl_rec;//---wishlistrec--
+            try {
+            var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
+            var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
+            if ((last_index <=0)||(App.collections.wishlists.models.length == 0)) {//--add model when empty wishlist
+                App.collections.wishlists.models.push(new App.Wishlist());
+            }
+            if (App.action=='new'){
+                wl_rec={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,want_cnt:App.main_view.cur_want_item,zayavka_id:App.zayavka_id};
+            }else {
+                wl_rec={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,want_id:App.collections.wants.models[App.main_view.cur_want_item].attributes.id,want_cnt:App.main_view.cur_want_item,zayavka_id:App.zayavka_id};
+            }
+            App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]=wl_rec;
+           } catch (e) {
+               console.error("ERROR insertWishAttribRow "+e)
+           }
         },
         addWishAttribContent:function(param_field,param_field_name,params_set){
             var field,field_name;
@@ -1032,9 +1099,7 @@
             //----ADD first bind EVENT for linked fields---
             if (field=="obj_id"){
                 $("#"+id_str).on("change",function(e){
-                    var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
-                    var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
-                    App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"",field_name:"",field_value:"",variant:cur_variant,zayavka_id:App.zayavka_id}
+                    App.main_view.insertWishAttribRow();
                     var obj_code=$(this).val()
                     if (obj_code == 1){//---money
                         App.main_view.addWishAttribContent('price_want','Price');
@@ -1267,7 +1332,7 @@
  <div style="width:100%;height:100%">
   <!--<input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">-->
    <div id="tbs-haves"  class="easyui-tabs" >
-     <div title="Object" style="padding:10px;background-color:#FFFFDD" >
+     <div id="tbs-haves-title-1" title="Object" style="padding:10px;background-color:#FFFFDD" >
        {{one_have_tpl_html}}
      </div>
    </div>
