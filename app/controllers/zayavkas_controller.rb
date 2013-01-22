@@ -83,7 +83,7 @@
               @haves.each_with_index do |item,index|
                 ##item['id']          = 0
                 item['room']          = item['room'] ==""?0:item['room'] #---check room input
-                item['tel_1']         = item['tel_1'].to_s+((@zayavka['tel_1'].blank?)?:"":@zayavka['tel_1'].to_s)+((@zayavka['tel_2'].blank?)?:"":@zayavka['tel_2'].to_s)
+                item['tel_1']         = item['tel_1'].to_s+((@zayavka['tel_1'].blank?)?"":@zayavka['tel_1'].to_s)+((@zayavka['tel_2'].blank?)?"":@zayavka['tel_2'].to_s)
                 item['zayavka_id']    = @zayavka.id
                 item['top_variant_id']= top_variant_id
                 item['variant']       = index+1
