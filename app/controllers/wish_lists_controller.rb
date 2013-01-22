@@ -46,6 +46,9 @@ class WishListsController < ApplicationController
     @wish_list.delete("controller")
     @wish_list.delete("wish_list")
     @wish_list.each do |key,item|
+      if item.blank?
+        next
+      end
       if item["id"].blank? #---added--
         if item["want_id"].blank?
            if @want_id.blank?
@@ -110,7 +113,7 @@ class WishListsController < ApplicationController
     @wish_list.destroy
 
     respond_to do |format|
-      format.html { redirect_to wish_lists_url }
+      #format.html { redirect_to wish_lists_url }
       format.json { head :no_content }
     end
   end
