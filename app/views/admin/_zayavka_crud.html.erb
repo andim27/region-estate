@@ -928,9 +928,10 @@
                 closable:false
 
             });
+//            if ((App.action=="edit")&&(target=="icon-add")){
+            App.collections.wants.models.push(new App.Want());
+            App.collections.wants.models[this.last_want_item].set("zayavka_id",App.zayavka_id);
             if ((App.action=="edit")&&(target=="icon-add")){
-                App.collections.wants.models.push(new App.Want());
-                App.collections.wants.models[this.last_want_item].set("zayavka_id",App.zayavka_id);
                 //---clear-field values--
                 if ((target=="icon-add")) {
 
@@ -958,7 +959,7 @@
                                   var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
                                   //var cur_want_id= App.collections.wishlists.models[App.main_view.cur_want_item].attributes[0]["want_id"];
                                   var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
-                                  if (last_index <=0) {//--add model when empty wishlist
+                                  if ((last_index <=0)||(App.collections.wishlists.models.length == 0)) {//--add model when empty wishlist
                                       App.collections.wishlists.models.push(new App.Wishlist());//{field_cond:"",field_name:"",field_value:"",variant:cur_variant}
                                   }
                                   App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,zayavka_id:App.zayavka_id}
@@ -1066,8 +1067,21 @@
             this.wi++;
             this.wish_rows[index]++;
         },
-        delWishFieldContent: function(field,index,wi) {
+        delWishFieldContent: function(field,index,wi,row_id) {
             $("#wi-"+wi+"-tb-"+index+"-wish-field-"+field+"-content").remove();
+            //delete  App.collections.wishlists.models[App.main_view.cur_want_item].attributes[row_id]
+            var cur_model=App.collections.wishlists.models[App.main_view.cur_want_item];
+            if (cur_model.attributes[row_id]['id'] != undefined){
+            $.ajax({type: "DELETE",url: cur_model.urlRoot+cur_model.attributes[row_id]['id']})
+                    .done(function( msg ) {
+                        alert( "Wish attributes Deleted: " + msg );
+                        cur_model.attributes[row_id]={}
+                    }).fail(function(jqXHR, textStatus) {
+                        alert( "Error delete: " + textStatus );
+                    });
+            } else {
+                cur_model.attributes[row_id]={}
+            }
         },
         fillWishSelectField:function (field,index,wi) {
             console.log("Fill select wish field "+field);
@@ -1321,7 +1335,7 @@
          {{field_html}}
        </td>
        <td width="10%">
-         <a href="javascript:App.main_view.delWishFieldContent('{{field}}',{{n}},{{wi}})" id="wi-{{wi}}-tb-{{n}}-wish-field-{{field}}-del" >Удалить</a>
+         <a href="javascript:App.main_view.delWishFieldContent('{{field}}',{{n}},{{wi}},{{row_id}})" id="wi-{{wi}}-tb-{{n}}-wish-field-{{field}}-del" >Удалить</a>
        </td>
      </tr>
    </table>
