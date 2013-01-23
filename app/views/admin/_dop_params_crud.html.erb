@@ -1,0 +1,191 @@
+<head>
+<link rel="stylesheet" type="text/css" href="/assets/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="/assets/themes/icon.css">
+<script type="text/javascript" src="/assets/jquery-1.8.0.min.js"></script>
+<script type="text/javascript" src="/assets/jquery.easyui.min.js"></script>
+</head>
+<div id="dop_params_cont"  >
+  <h2>Dop params dictionary</h2>
+
+  <div style="margin:10px 0;"></div>
+
+  <table id="tg" class="easyui-treegrid" title="TreeGrid ContextMenu" style="width:700px;height:250px"
+         data-options="
+				iconCls: 'icon-ok',
+				rownumbers: true,
+				animate: true,
+				collapsible: true,
+				fitColumns: true,
+				data:data_json,
+				toolbar:tools,
+				idField: 'id',
+				treeField: 'name',
+				onContextMenu: onContextMenu
+			">
+    <thead>
+    <tr>
+      <th data-options="field:'name',width:180,editor:'text'">Task Name</th>
+      <th data-options="field:'persons',width:60,align:'right',formatter:
+                        function(value,row){
+							return row.id;
+						},
+						editor:{
+							type:'combobox',
+							options:{
+								valueField:'id',
+								textField:'name',
+								data:data_fields_list,
+								//url:'../datagrid/products.json',
+								required:true
+							}
+						}">Fields_list</th>
+      <th data-options="field:'begin',width:80">Begin Date</th>
+      <th data-options="field:'end',width:80">End Date</th>
+      <th data-options="field:'progress',width:120">Progress</th>
+    </tr>
+    </thead>
+  </table>
+  <div id="mm" class="easyui-menu" style="width:120px;">
+    <div onclick="append()" data-options="iconCls:'icon-add'">Append</div>
+    <div onclick="remove()" data-options="iconCls:'icon-remove'">Remove</div>
+    <div onclick="edit()" data-options="iconCls:'icon-edit'">Edit</div>
+    <div class="menu-sep"></div>
+    <div onclick="collapse()">Collapse</div>
+    <div onclick="expand()">Expand</div>
+  </div>
+  <script type="text/javascript">
+      var data_fields_list=[{
+          "id":1,
+          "text":"text1"
+      },{
+          "id":2,
+          "text":"text2"
+      },{
+          "id":4,
+          "text":"text4"
+      },{
+          "id":5,
+          "text":"text5"
+      }]  ;
+      var data_json={"total":7,"rows":[
+          {"id":1,"name":"All Tasks","begin":"3/4/2010","end":"3/20/2010","progress":60,"iconCls":"icon-ok"},
+          {"id":2,"name":"Designing","begin":"3/4/2010","end":"3/10/2010","progress":100,"_parentId":1,"state":"closed"},
+          {"id":21,"name":"Database","persons":2,"begin":"3/4/2010","end":"3/6/2010","progress":100,"_parentId":2},
+          {"id":22,"name":"UML","persons":1,"begin":"3/7/2010","end":"3/8/2010","progress":100,"_parentId":2},
+          {"id":23,"name":"Export Document","persons":1,"begin":"3/9/2010","end":"3/10/2010","progress":100,"_parentId":2},
+          {"id":3,"name":"Coding","persons":2,"begin":"3/11/2010","end":"3/18/2010","progress":80},
+          {"id":4,"name":"Testing","persons":1,"begin":"3/19/2010","end":"3/20/2010","progress":20}
+      ]};
+//var data_json=[
+//    {"id":1,"name":"All Tasks","begin":"3/4/2010","end":"3/20/2010","progress":60,"iconCls":"icon-ok"},
+//    {"id":2,"name":"Designing","begin":"3/4/2010","end":"3/10/2010","progress":100,"_parentId":1,"state":"closed"},
+//    {"id":21,"name":"Database","persons":2,"begin":"3/4/2010","end":"3/6/2010","progress":100,"_parentId":2},
+//    {"id":22,"name":"UML","persons":1,"begin":"3/7/2010","end":"3/8/2010","progress":100,"_parentId":2},
+//    {"id":23,"name":"Export Document","persons":1,"begin":"3/9/2010","end":"3/10/2010","progress":100,"_parentId":2},
+//    {"id":3,"name":"Coding","persons":2,"begin":"3/11/2010","end":"3/18/2010","progress":80,"_parentId":22},
+//    {"id":4,"name":"Testing","persons":1,"begin":"3/19/2010","end":"3/20/2010","progress":20}
+//];
+      var tools= [
+          {
+              iconCls: 'icon-add',
+              handler: function(){append()}
+          },'-',{
+              iconCls: 'icon-edit',
+              handler: function(){edit()}
+          },
+          {
+              iconCls: 'icon-remove',
+              handler: function(){remove()}
+          },'-',
+          {
+              iconCls: 'icon-save',
+              handler: function(){saveItem()}
+          },
+          {
+              iconCls: 'icon-cancel',
+              handler: function(){cancel()}
+          }
+      ]
+      function onContextMenu(e,row){
+          e.preventDefault();
+          $(this).treegrid('select', row.id);
+          $('#mm').menu('show',{
+              left: e.pageX,
+              top: e.pageY
+          });
+      }
+      var idIndex = 100;
+      function append(){
+          idIndex++;
+          var d1 = new Date();
+          var d2 = new Date();
+          d2.setMonth(d2.getMonth()+1);
+          var node = $('#tg').treegrid('getSelected');
+          $('#tg').treegrid('append',{
+              parent: node.id,
+              data: [{
+                  id: idIndex,
+                  name: 'New Task'+idIndex,
+                  persons: parseInt(Math.random()*10),
+                  begin: $.fn.datebox.defaults.formatter(d1),
+                  end: $.fn.datebox.defaults.formatter(d2),
+                  progress: parseInt(Math.random()*100)
+              }]
+          })
+      }
+      function remove(){
+          var node = $('#tg').treegrid('getSelected');
+          if (node){
+              $('#tg').treegrid('remove', node.id);
+          }
+      }
+      function collapse(){
+          var node = $('#tg').treegrid('getSelected');
+          if (node){
+              $('#tg').treegrid('collapse', node.id);
+          }
+      }
+      function expand(){
+          var node = $('#tg').treegrid('getSelected');
+          if (node){
+              $('#tg').treegrid('expand', node.id);
+          }
+      }
+        var editingId;
+        function edit(){
+            if (editingId != undefined){
+                $('#tg').treegrid('select', editingId);
+                return;
+            }
+            var row = $('#tg').treegrid('getSelected');
+            if (row){
+                editingId = row.id
+                $('#tg').treegrid('beginEdit', editingId);
+            }
+        }
+        function saveItem(){
+            if (editingId != undefined){
+                var t = $('#tg');
+                t.treegrid('endEdit', editingId);
+                editingId = undefined;
+                var persons = 0;
+                var rows = t.treegrid('getChildren');
+                for(var i=0; i<rows.length; i++){
+                    var p = parseInt(rows[i].persons);
+                    if (!isNaN(p)){
+                        persons += p;
+                    }
+                }
+                var frow = t.treegrid('getFooterRows')[0];
+                frow.persons = persons;
+                t.treegrid('reloadFooter');
+            }
+        }
+        function cancel(){
+            if (editingId != undefined){
+                $('#tg').treegrid('cancelEdit', editingId);
+                editingId = undefined;
+            }
+        }
+  </script>
+</div>
