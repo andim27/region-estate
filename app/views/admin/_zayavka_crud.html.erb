@@ -1,4 +1,4 @@
-﻿
+﻿﻿
 <!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />-->
 <!--<script src="http://code.jquery.com/jquery-1.8.3.js"></script>-->
 <!--<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>-->
@@ -210,10 +210,9 @@
                        },
                        onAdd:function(title,index){
                            console.log("onAdd "+index)
-                           App.main_view.initHaveEvents(index);
-                           if (index==0){
-                               $('#tbs-haves span.tabs-title')[0].textContent=App.main_view.getHaveTabTitle();
-                           }
+                           //App.main_view.initHaveEvents(index);
+
+
 
                        },
                        onSelect:function(title,index){
@@ -231,7 +230,7 @@
                    tools: App.main_view.getTabsTools("want"),
                    onAdd:function(title,index){
                        console.log("onAdd want "+index)
-                       App.main_view.initWantEvents(index);
+                       //App.main_view.initWantEvents(index);
 
                    },
                    onSelect:function(title,index){
@@ -275,7 +274,7 @@
      });
      App.InfoType = Backbone.Model.extend({
 
-    });
+     });
     App.InfoSource = Backbone.Model.extend({
         defaults: {
             name: '',
@@ -284,7 +283,9 @@
             created_at:''
         }
     });
+     App.DopParam = Backbone.Model.extend({
 
+     });
     //----------collection common method---------------------------
      Backbone.Collection.prototype.getSelectOptions=function(){
          var options_arr=[{val:0,label:"select item..."}];
@@ -309,6 +310,7 @@
          $("#"+dom_id).html(out_str);
      }
      //---------collection CLASS---------------------------------------
+
      App.InfoSources = Backbone.Collection.extend({
          url:App.protocol+App.baseUrl+"info_sources/",
          model: App.InfoSource,
@@ -333,6 +335,10 @@
              }
              $("#wish-from-cmb-"+index).html(out_str);
          }
+     });
+     App.DopParams = Backbone.Collection.extend({
+         url:App.protocol+App.baseUrl+"dop_params/",
+
      });
      App.Statuses = Backbone.Collection.extend({
          //url:"http://"+App.baseUrl+"objs/",
@@ -396,11 +402,11 @@
              var field_value=$("#"+dom_id).val();
              var row_id = $("#"+dom_id).attr("row_id");
              var rows=this.models[index].attributes;
-             console.log("BIND TO MODEL rows="+rows);
-             console.log("BIND TO MODEL dom_id="+dom_id);
-             console.log("BIND TO MODEL name="+field_name);
-             console.log("BIND TO MODEL val="+field_value);
-             console.log("setToModel index="+index+" field="+field_name+" value="+field_value+" row_id="+row_id);
+//             console.log("BIND TO MODEL rows="+rows);
+//             console.log("BIND TO MODEL dom_id="+dom_id);
+//             console.log("BIND TO MODEL name="+field_name);
+//             console.log("BIND TO MODEL val="+field_value);
+//             console.log("setToModel index="+index+" field="+field_name+" value="+field_value+" row_id="+row_id);
 
 
              if (dom_id.search(/-cond-/) != -1){//---data from COND FIELD
@@ -478,10 +484,8 @@
              year: {type:'Number',template:'field'},
 
              tel_1:{type:'Text',template:'field_br'},
-             dop:{type:'TextArea',template:'field_br'},
-
-
-            obmen_want:{type: 'Checkbox',template:'field'},
+             dop:{type:'Text',template:'field_br'},
+            obmen_want:{type: 'Checkbox',template:'field_clear'},
             sell_want: {type: 'Checkbox',template:'field'},
             rent_want: {type: 'Checkbox',template:'field_br'}
          }
@@ -608,8 +612,8 @@
                 var fields = App.collections.wishlists.models[i].attributes;//---!!!---
                 for (var f in fields){
                     console.log("bindWantsFormAttributes")
-                    console.log(f)
-                    console.log(fields[f])
+                    //console.log(f)
+                    //console.log(fields[f])
                     var variant_val=(fields[f]['variant']==true)?1:fields[f]['variant']
                     $("#wish-variant-"+i).val(variant_val);
                     var params_set={field_value:fields[f]['field_value'],field_cond:App.setCond(fields[f]['field_cond'])};//---SET VALUE FROM MODEL
@@ -617,7 +621,7 @@
 
                 }
                 //if (i==0){
-                    $('#tbs-wants span.tabs-title')[i].textContent=App.main_view.getWantTabTitle();
+                ////$('#tbs-wants span.tabs-title')[i].textContent=App.main_view.getWantTabTitle();
                 //}
             }
             $('#tbs-wants').tabs("select",0);
@@ -694,6 +698,7 @@
              return (index);
         },
         initHaveEvents:function (index) {
+            console.log("INITHAVEEVENT index="+index)
             if  (App.collections.haves.models[index]==undefined) {
                  App.collections.haves.models[index]=new App.Have();
             }
@@ -703,7 +708,7 @@
             //----UI field change-replace----------------------------------
             $("#hh-"+index+"-room").numberspinner({
                 onChange: function(value){
-                    //console.log("room="+value);
+                    console.log("room="+value);
                     model_cur.attributes.room=value;
                 },
                 min: 1,max: 100,editable: true});
@@ -719,11 +724,12 @@
                     model_cur.attributes.year=value;
                 },
                 min: 1900,max: 2050, editable: true});
+
             //----CHANGE EVENT SET------Link Form Field with Model-----------------
             for( var field in fields){
                 if (["room","floor_house","year"].indexOf(field)==-1) { //--input field UI only
                     $("#hh-"+index+"-"+field).on("change",function(e){
-                            //console.log("changed field "+$(this).prop("id")+" value="+$(this).val()+" type="+$(this).prop("type"))
+                            console.log("changed field "+$(this).prop("id")+" value="+$(this).val()+" type="+$(this).prop("type"))
                             if ($(this).prop("type")=="checkbox") {  //--torg,obmen_want,rent_want
                                 model_cur.attributes[$(this).prop("name")] = $(this).prop("checked")?1:0;
                             } else {
@@ -745,7 +751,10 @@
                 $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
 
             });
-
+            //----title-------------------------
+            //if (index==0){
+                $('#tbs-haves span.tabs-title')[index].textContent=App.main_view.getHaveTabTitle();
+            //}
 
         },
         correctHaveCSS:function(index){
@@ -755,6 +764,7 @@
             $("#hh-"+index+"-floor,"+"#hh-"+index+"-floor_house").attr("size",4);
              //--css correct-----------------------
              $(".bbf-field").css("margin","5px");
+
              $("#hh-"+index+"-price_estimate").attr("size",8).css("color","red");
              $("#hh-"+index+"-price_want").attr("size",8).css("color","green");
              $("#hh-"+index+"-house_n,"+"#hh-"+index+"-flat_n").attr("size",8);
@@ -829,21 +839,25 @@
         },
         getWantTabTitle:function(){
              var title="Wish"
-             if ((App.action=="edit")|| (App.action=="view")){
-                 var index  = App.main_view.cur_want_item
-                 var obj_id = App.collections.wants.models[index].get("obj_id")
-                 var room = App.collections.wants.models[index].get("room")
-                 if (([2,3,4,5,6,7,8,9,10].indexOf(obj_id) != -1) &&(room != undefined)) {
-                     //--room+flat
-                     title=room+"-ком,"+App.collections.objs.where({id:obj_id})[0].get("name")
-                 } else {
-                     title=App.collections.objs.where({id:obj_id})[0].get("name")
+             //return title;
+            try {
+                if ((App.action=="edit")|| (App.action=="view")){
+                     var index  = App.main_view.cur_want_item
+                     var obj_id = App.collections.wants.models[index].get("obj_id")
+                     var room = App.collections.wants.models[index].get("room")
+                     if (([2,3,4,5,6,7,8,9,10].indexOf(obj_id) != -1) &&(room != undefined)) {
+                         //--room+flat
+                         title=room+"-ком,"+App.collections.objs.where({id:obj_id})[0].get("name")
+                     } else {
+                         title=App.collections.objs.where({id:obj_id})[0].get("name")
+                     }
                  }
-             }
+            } catch (e){console.log(e)}
              return title;
         },
         getHaveTabTitle:function(){
             var title="Object"
+            //return title;
             if ((App.action=="edit")|| (App.action=="view")){
                try {
                 var index  = App.main_view.cur_have_item
@@ -922,13 +936,16 @@
                 }
             }
             var content_new_tab=this.addHaveForm();
+            console.log("addHaveTab")
+            console.log(content_new_tab)
             $('#tbs-haves').tabs('add',{
-                title:this.getHaveTabTitle(),
+                title:"HaveObj",//this.getHaveTabTitle(),
                 content:content_new_tab,
                 closable:false
 
             });
-
+            //!!! my new hack
+            this.initHaveEvents(this.last_have_item)
 
         },
 
@@ -961,6 +978,7 @@
             if (App.action=="new") {
                 App.main_view.addWishAttribContent('obj_id','Object');
             }
+            $('#tbs-wants span.tabs-title')[index].textContent=App.main_view.getWantTabTitle();
         },
         addWantForm: function(){
             var want_item_html   ="";
@@ -981,6 +999,9 @@
             });
 //            if ((App.action=="edit")&&(target=="icon-add")){
             App.collections.wants.models.push(new App.Want());
+            if (App.collections.wants.models[this.last_want_item] == undefined){
+                App.collections.wants.models[this.last_want_item]=new App.Want();
+            }
             App.collections.wants.models[this.last_want_item].set("zayavka_id",App.zayavka_id);
             if ((App.action=="edit")&&(target=="icon-add")){
                 //---clear-field values--
@@ -993,6 +1014,8 @@
 
             this.wish_rows[this.cur_want_item]=0;
             this.cur_want_item=this.last_want_item;
+            this.initWantEvents(this.cur_want_item)
+
         },
         showWantPanels:function(index){
             var content_html=_.template( $("#wish-from-content").html(),{n:index});
@@ -1010,8 +1033,13 @@
                                   //var cur_variant=$("#wish-variant-"+App.main_view.cur_want_item).val();
                                   //var last_index=App.main_view.wish_rows[App.main_view.cur_want_item];
                                   //App.collections.wishlists.models[App.main_view.cur_want_item].attributes[last_index]={field_cond:"=",field_name:"?",field_value:"?",variant:cur_variant,want_cnt:App.main_view.cur_want_item,zayavka_id:App.zayavka_id}
+                                 try {
                                   App.main_view.insertWishAttribRow();
                                   App.main_view.addWishAttribContent();
+                                 } catch (e) {
+                                     console.log("ERROR showWantPanels handler ")
+                                     console.log(e)
+                                 }
                               }
                           }]
                       }
@@ -1122,10 +1150,10 @@
             });
             //---EDIT bind VALUE for edit-view action
             if (params_set != undefined) {
-                console.log("params_set id_str="+id_str)
-                console.log("params_set cond_id="+cond_id)
-                console.log("params_set field_value="+params_set.field_value)
-                console.log("params_set params_set.field_cond="+params_set.field_cond)
+                //console.log("params_set id_str="+id_str)
+                //console.log("params_set cond_id="+cond_id)
+                //console.log("params_set field_value="+params_set.field_value)
+                //console.log("params_set params_set.field_cond="+params_set.field_cond)
                 $("#"+id_str).val(params_set.field_value)
                 $("#"+cond_id).val(params_set.field_cond)
             }
@@ -1224,6 +1252,9 @@
     App.collections.statuses=new App.Statuses();
     App.collections.havefields=new App.HaveFields();
     App.collections.rents=new App.Rents();
+    //App.collections.dop_params=new App.DopParams();
+    //App.collections.dop_params.setData(eval('<%=@dop_params; %>'.replace(/&quot;/g,'"')));
+
     App.collections.wishlists=new App.Wishlists({zayavka_id:App.zayavka_id});
 
      App.collections.haves   =new App.Haves();
@@ -1304,7 +1335,6 @@
       <td width="50%">
         <div class="panel">
           <h3>Haves</h3>
-
           {{haves_tpl_html}}
         </div>
       </td>
