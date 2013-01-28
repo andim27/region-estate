@@ -116,8 +116,14 @@
                     attr_arr=$("*[id^='hh-"+i+"']:not(disabled)");
                     for (var j=0; j<attr_arr.length;j++){
                        param = _.last(attr_arr[j].id.split("-"));
-                       console.log("param="+param)
-                       rec[param]=attr_arr[j].value;
+                       console.log("PICK HAVE param="+param)
+                        if ((param =="dop_param_1")||(param =="dop_param_2")){
+                            rec[param]=$("#hh-"+i+"-"+param).combotree('getValues').join();
+                        } else {
+                            rec[param]=attr_arr[j].value;
+                        }
+
+                       console.log("PICK HAVE value="+attr_arr[j].value)
                        if (attr_arr[j].type=="checkbox") {
                            if (attr_arr[j].checked) {
                                   rec[param]=1;
@@ -339,6 +345,65 @@
      App.DopParams = Backbone.Collection.extend({
          url:App.protocol+App.baseUrl+"dop_params/",
 
+         setData:function(data_rows){
+             this.reset(data_rows);
+             this.all_rows=data_rows;
+         },
+         getSelectTree:function(n){
+             if (n==1){
+                 id_arr=[1,2,3,4,5,7,8];
+
+             }
+             if (n==2){
+                 id_arr=[6,9,10,27];
+             }
+             var out=[],done_arr=[],rows=[];
+             if (id_arr != undefined) {
+                 rows=this.filter(function (el) {
+                     if (id_arr.indexOf(el.id) !=-1){return el;}
+                 });
+             } else {
+                 rows=this.models;
+             }
+             for (var rec in rows) { //--level 0
+
+                 if (rows[rec].attributes._parentId==0) {
+                     out.push({id:rows[rec].attributes.id,text:rows[rec].attributes.name,state:"closed"});
+                     done_arr.push(rec)
+                 }
+             }
+
+             for (var rec in out) { //--level 1
+                 var sub_rec=this.where({_parentId:out[rec].id});
+                 //console.log(sub_rec)
+                 out[rec]["children"]=[]
+                 for (var rec_2 in sub_rec) {
+                     var node=sub_rec[rec_2];
+                     out[rec]["children"].push({id:node.attributes.id,text:node.attributes.name});
+
+                 }
+
+             }
+             //console.log("FIND for !!!-------------")
+             //console.log(out)
+             for (var rec in out) { //--level 0
+                 sub_nodes=out[rec]
+                 if (sub_nodes.children !=undefined) {
+                     nodes_1=sub_nodes.children
+                     for (var rec_sub in nodes_1){ //--level 1
+                         sub2_nodes = this.where({_parentId:nodes_1[rec_sub].id})
+                         if (sub2_nodes.length >0) {
+                             for (var rec_2 in sub2_nodes) {  //--level 2
+                                 node=sub2_nodes[rec_2]
+                                 if  (nodes_1[rec_sub]["children"]==undefined) {nodes_1[rec_sub]["children"]=[]}
+                                 nodes_1[rec_sub]["children"].push({id:node.attributes.id,text:node.attributes.name})
+                             }
+                         }
+                     }
+                 }
+             }
+             return out;
+         }
      });
      App.Statuses = Backbone.Collection.extend({
          //url:"http://"+App.baseUrl+"objs/",
@@ -408,7 +473,9 @@
 //             console.log("BIND TO MODEL val="+field_value);
 //             console.log("setToModel index="+index+" field="+field_name+" value="+field_value+" row_id="+row_id);
 
-
+             if(rows[row_id] == undefined){
+                rows[row_id]={}
+             }
              if (dom_id.search(/-cond-/) != -1){//---data from COND FIELD
                  rows[row_id]['field_cond']=field_value
              }else {
@@ -485,6 +552,8 @@
 
              tel_1:{type:'Text',template:'field_br'},
              dop:{type:'Text',template:'field_br'},
+             dop_param_1:{type:'Text',template:'field_clear'},
+             dop_param_2:{type:'Text',template:'field_clear'},
             obmen_want:{type: 'Checkbox',template:'field_clear'},
             sell_want: {type: 'Checkbox',template:'field'},
             rent_want: {type: 'Checkbox',template:'field_br'}
@@ -580,6 +649,7 @@
             for (var i=0;i<tbs_l;i++){
                 var rec=App.collections.haves.at(i).attributes;
                 for (var field in rec){
+
                     var value=rec[field]
                     if (value == ""){continue;}
                     var el=$("#hh-"+i+"-"+field)
@@ -587,6 +657,8 @@
                         el.prop("checked",true)
                     }
                     el.val(value)
+
+
                     //---rayon--street
                     if (field=="rayon_id"){
                         var rayon_dom_id="#hh-"+i+"-street_id";
@@ -594,9 +666,22 @@
                         log("rayon_dom_id="+rayon_dom_id)
                         App.collections.rayons.setStreet(rayon_dom_id,code_rayon,rec.street_id)
                     }
+                    //---dop_param_1 ,2
+                    if ((value != null)){
+                        if (field =="dop_param_1") { //----value format string: 1,2,3,4,5
+                            console.log("bindHavesFormAttributes field="+field)
+                            console.log("val="+value)
+                            $("#hh-"+i+"-dop_param_1").combotree('setValues', value.split(",").map(Number));
+                        }
+                        if (field =="dop_param_2") { //----value format string: 1,2,3,4,5
+                            console.log("bindHavesFormAttributes field="+field)
+                            console.log("val="+value)
+                            $("#hh-"+i+"-dop_param_2").combotree('setValues', value.split(",").map(Number));
+                        }
+                    }
                 }
                 if (i==0){
-                    $('#tbs-haves span.tabs-title')[0].textContent=App.main_view.getHaveTabTitle();
+                    //$('#tbs-haves span.tabs-title')[0].textContent=App.main_view.getHaveTabTitle();
                 }
             }
         },
@@ -751,6 +836,23 @@
                 $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
 
             });
+            //---DOP_param-----------------------------
+            var dp_par_arr_1=App.collections.dop_params.getSelectTree(1);
+            var dp_par_arr_2=App.collections.dop_params.getSelectTree(2);
+            $("#hh-"+index+"-dop_param_1").combotree({data:dp_par_arr_1,lines:true,multiple:true,separator:', ',cascadeCheck:false,
+                onChange:function(newValue, oldValue){
+                    console.log("DOP_PARAM 1 CHANGE "+newValue)
+                    model_cur.attributes["dop_param_1"] = String(newValue);
+                }
+            });
+            //App.collections.dop_params.collapseAll(index,1);
+            $("#hh-"+index+"-dop_param_2").combotree({data:dp_par_arr_2,lines:true,multiple:true,separator:', ',cascadeCheck:false,
+                onChange:function(newValue, oldValue){
+                    console.log("DOP_PARAM 2 CHANGE "+newValue)
+                    model_cur.attributes["dop_param_2"] = String(newValue);
+                }
+            });
+            //App.collections.dop_params.collapseAll(index,2)
             //----title-------------------------
             //if (index==0){
                 $('#tbs-haves span.tabs-title')[index].textContent=App.main_view.getHaveTabTitle();
@@ -770,7 +872,9 @@
              $("#hh-"+index+"-house_n,"+"#hh-"+index+"-flat_n").attr("size",8);
              $("#hh-"+index+"-s_all,"+"#hh-"+index+"-s_live,"+"#hh-"+index+"-s_kux").attr("size",4);
              $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",75);
-
+             $("#hh-"+index+"-dop_param_1,"+"#hh-"+index+"-dop_param_2").css("width","480px");
+             //$(".panel-header, .panel-body").css( {"border-color":"#95B8E7"," border-style":"solid","z-index":2000});
+             $(".combo-panel, .panel-body").css({"border-color":"#95B8E7"," border-style":"solid"});
          },
         correctZayavkaCSS:function(){
             //--B------!!!!!!--activeadmin----!!!!!!!!
@@ -1019,7 +1123,7 @@
         },
         showWantPanels:function(index){
             var content_html=_.template( $("#wish-from-content").html(),{n:index});
-            console.log(index+") showWantPanels="+content_html);
+            //console.log(index+") showWantPanels="+content_html);
             $("#wish-attrib-panel-"+index).panel(
                       {
                           width:"auto",
@@ -1252,8 +1356,8 @@
     App.collections.statuses=new App.Statuses();
     App.collections.havefields=new App.HaveFields();
     App.collections.rents=new App.Rents();
-    //App.collections.dop_params=new App.DopParams();
-    //App.collections.dop_params.setData(eval('<%=@dop_params; %>'.replace(/&quot;/g,'"')));
+    App.collections.dop_params=new App.DopParams();
+    App.collections.dop_params.setData(eval('<%=@dop_params; %>'.replace(/&quot;/g,'"')));
 
     App.collections.wishlists=new App.Wishlists({zayavka_id:App.zayavka_id});
 
