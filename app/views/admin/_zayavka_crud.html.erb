@@ -2,7 +2,7 @@
 <!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />-->
 <!--<script src="http://code.jquery.com/jquery-1.8.3.js"></script>-->
 <!--<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>-->
-
+<%= javascript_include_tag "planirovka" %>
 <script>
  $(function() {
 
@@ -36,6 +36,8 @@
          }
          return options.inverse(this);
      });
+     //---------------planirovka--------------------------------------------
+
     //----------------------------ROUTER------------------------------------
      App.Router = Backbone.Router.extend({
          routes: {
@@ -541,7 +543,7 @@
 
              house_n: {type: 'Text',template:'field_clear'},
              flat_n:  {type: 'Text',template:'field'},
-
+             plan_rooms:    {type: 'Text',template:'field_plan_rooms',help:'plan rooms'},
              orientir: {type: 'Text',template:'field_clear'},
 
              s_all: {type: 'Number',template:'field_clear'},
@@ -587,6 +589,12 @@
               <label for="{{id}}">{{title}}</label>\
               <div>{{editor}}</div> <div>{{help}}</div>\
             </div><div class="clear"></div>\
+          ',
+         field_plan_rooms: '\
+            <div style="float:left;margin:20px 5px 5px 5px;display:block;"  >\
+             <a id="{{id}}_btn" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:\'icon-search\'">Plan{{help}}</a>\
+              <div  style="float:right;margin-left:5px">{{editor}}</div>\
+            </div>\
           ',
      };
      App.MainView = Backbone.View.extend({
@@ -853,9 +861,18 @@
                 }
             });
             //App.collections.dop_params.collapseAll(index,2)
-            //----title-------------------------
+            //------------Planirovka----------------
+            $("#hh-"+index+"-plan_rooms_btn").on("click",function(e){
+                var params={
+                    room:$("#hh-"+App.main_view.cur_have_item+"-room").val(),
+                    dom_id:"hh-"+App.main_view.cur_have_item+"-plan_rooms"
+                }
+                App.models.planirovka.show(params);
+            });
+            $.parser.parse('#have-item-'+index);
+            //----TAB title-------------------------
             //if (index==0){
-                $('#tbs-haves span.tabs-title')[index].textContent=App.main_view.getHaveTabTitle();
+            $('#tbs-haves span.tabs-title')[index].textContent=App.main_view.getHaveTabTitle();
             //}
 
         },
@@ -873,6 +890,7 @@
              $("#hh-"+index+"-s_all,"+"#hh-"+index+"-s_live,"+"#hh-"+index+"-s_kux").attr("size",4);
              $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",75);
              $("#hh-"+index+"-dop_param_1,"+"#hh-"+index+"-dop_param_2").css("width","480px");
+            $("#hh-"+index+"-plan_rooms").attr("disabled",true)
              //$(".panel-header, .panel-body").css( {"border-color":"#95B8E7"," border-style":"solid","z-index":2000});
              $(".combo-panel, .panel-body").css({"border-color":"#95B8E7"," border-style":"solid"});
          },
@@ -1386,6 +1404,7 @@
     App.models.have     = new App.Have();
     App.models.want     = new App.Want();
     App.models.wishlist = new App.Wishlist();
+    App.models.planirovka = new Planirovka();
 
     App.collections.haves.model=App.models.have
     App.collections.wants.model=App.models.want
@@ -1463,7 +1482,7 @@
 </script>
 <!--  ******************************TEMPLATES  HAVES****************************** -->
 <script type="text/template" id="haves-tpl">
- <div style="width:100%;height:100%">
+ <div id="haves_div" style="width:100%;height:100%">
   <!--<input type="submit" value="Add (+)" id="add_have" style="margin-left:35px;margin-bottom:10px">-->
    <div id="tbs-haves"  class="easyui-tabs" >
      <div id="tbs-haves-title-1" title="Object" style="padding:10px;background-color:#FFFFDD" >
@@ -1539,6 +1558,28 @@
      </tr>
    </table>
 
+</script>
+<!---------------slider content---------------------->
+<script type="text/x-handlebars-template" id="slider-content">
+  <div  id="slider" class="flexslider">
+    aaa
+    <ul class="slides">
+      <li>
+        <img src="Planirovki/{{room}}-room/room_{{room}}_1.gif" />
+      </li>
+      <li>
+        <img src="Planirovki/{{room}}-room/room_{{room}}_2.gif" />
+      </li>
+      <li>
+        <img src="Planirovki/{{room}}-room/room_{{room}}_3.gif" />
+      </li>
+      <li>
+        <img src="Planirovki/{{room}}-room/room_{{room}}_4.gif" />
+      </li>
+      <!-- items mirrored twice, total of 12 -->
+    </ul>
+  </div>
+  <div  id="carousel" class="flexslider">ccc</div>
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
