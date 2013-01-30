@@ -76,8 +76,37 @@ class HavesController < ApplicationController
     @hafe.destroy
 
     respond_to do |format|
-      format.html { redirect_to haves_url }
+      ##format.html { redirect_to haves_url }
       format.json { head :no_content }
     end
   end
+end
+
+#-Planirovki
+#config.assets.paths << "#{Rails.root}/app/assets/images/Planirovki"
+#  making it something such as application.js.erb,
+# $('#logo').attr({
+# src: "<%= asset_path('logo.png') %>"
+# });
+#def absolute_javascript_url(source)
+#   uri = URI.parse(root_url)
+#   uri.merge(javascript_path(source))
+#end
+#def image_url(source)
+#  "#{root_url}#{image_path(source)}"
+#end
+def planirovki
+  room =params[:id]
+  path=request.protocol + request.host_with_port
+  if [1,2,3,4].include?(room)
+      path=request.protocol + request.host_with_port + image_path("Planirovki/#{room}-room/")
+      file_names=Dir.glob(path+'*.gif')
+  end
+  rescue
+  respond_to do |format|
+    if not file_names.blank?
+      format.json { render json: file_names.to_json }
+    else
+      format.json { render json: "no files in:"+path, status: :unprocessable_entity }
+    end
 end
