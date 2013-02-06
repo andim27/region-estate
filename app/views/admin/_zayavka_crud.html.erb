@@ -2,40 +2,57 @@
 <!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />-->
 <!--<script src="http://code.jquery.com/jquery-1.8.3.js"></script>-->
 <!--<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>-->
-<%= javascript_include_tag "planirovka" %>
+<%= csrf_meta_tag %>
 <script>
- $(function() {
-
     //------------------DEFINITIONS-----
     HB=Handlebars;
     function log(p){
-    if (console != undefined){
-        console.log(p)
-    }
+        if (console != undefined){
+            console.log(p)
+        }
     };
-    window.App={action:"<%=@action %>",
-                zayavka_id:<%=@zayavka_id %>,
-                models:{},
-                collections:{},
-                forms:{zayavka:{},have_arr:[],want_ar:[]},
-                protocol:"http://",
-                baseUrl:"<%= request.env["HTTP_HOST"]; %>/"
+    window.App={
+        action:"<%=@action %>",
+        zayavka_id:<%=@zayavka_id %>,
+        models:{},
+        collections:{},
+        forms:{zayavka:{},have_arr:[],want_ar:[]},
+        protocol:"http://",
+        baseUrl:"<%= request.env["HTTP_HOST"]; %>/",
+        uploadify_data:{
+            'type':"plan",
+            '_http_accept': 'application/javascript',
+            '_method': 'put',
+            '<%=Rails.application.config.session_options[:key] %>':encodeURIComponent('<%= u cookies["_estate_session"] %>'),
+            'authenticity_token':encodeURIComponent('<%= u form_authenticity_token %>')
+        }
     };
+    App.trim=function(string) {
+        return string.replace(/(^\s+)|(\s+$)/g, "");
+    };
+
     App.setCond=function(cond){
         return cond.replace(/&gt;/,">").replace(/&lt;/,"<")
     };
     HB.registerHelper('ifCond', function(v1, v2, options) {
-         if(v1 == v2) {
-             return options.fn(this);
-         }
-         return options.inverse(this);
-     });
-     HB.registerHelper('if-in', function(v1, v2, options) {
-         if(v2.indexOf(v1) !=-1) {
-             return options.fn(this);
-         }
-         return options.inverse(this);
-     });
+        if(v1 == v2) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+    HB.registerHelper('if-in', function(v1, v2, options) {
+        if(v2.indexOf(v1) !=-1) {
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    });
+</script>
+<%= javascript_include_tag "planirovka" %>
+<%= javascript_include_tag "map" %>
+<script>
+ $(function() {
+
+
      //---------------planirovka--------------------------------------------
 
     //----------------------------ROUTER------------------------------------
@@ -264,6 +281,9 @@
             "room":0,
             "rayon_id":0,
             "street_id":0
+        },
+        makePlanImageUrl:function(){
+
         }
     });
     App.Want = Backbone.Model.extend({
@@ -537,6 +557,9 @@
              torg:{type: 'Checkbox',template:'field'},
              floor:{type:'Number',template:'field_clear'},
              floor_house:  {type:'Number',template:'field'},
+             s_all: {type: 'Number',template:'field'},
+             s_live:{type: 'Number',template:'field'},
+             s_kux :{type: 'Number',template:'field'},
 
              rayon_id: {type: 'Select',options:[],template:'field_clear'},
              street_id:{type: 'Select',options:[],template:'field'},
@@ -544,18 +567,17 @@
              house_n: {type: 'Text',template:'field_clear'},
              flat_n:  {type: 'Text',template:'field'},
              plan_rooms:    {type: 'Text',template:'field_plan_rooms',help:'plan rooms'},
-             orientir: {type: 'Text',template:'field_clear'},
+             orientir: {type: 'Text',template:'field_map'},
 
-             s_all: {type: 'Number',template:'field_clear'},
-             s_live:{type: 'Number',template:'field'},
-             s_kux :{type: 'Number',template:'field'},
+
              state_id:  {type:'Select',options:[],template:'field'},
              year: {type:'Number',template:'field'},
 
              tel_1:{type:'Text',template:'field_br'},
-             dop:{type:'Text',template:'field_br'},
+
              dop_param_1:{type:'Text',template:'field_clear'},
              dop_param_2:{type:'Text',template:'field_clear'},
+             dop:{type:'Text',template:'field_br'},
             obmen_want:{type: 'Checkbox',template:'field_clear'},
             sell_want: {type: 'Checkbox',template:'field'},
             rent_want: {type: 'Checkbox',template:'field_br'}
@@ -570,6 +592,13 @@
               <label for="{{id}}">{{title}}</label>\
               <div>{{editor}}</div> <div>{{help}}</div>\
             </div>\
+          ',
+         field_map: '\
+            <div style="float:left;margin: 5px;"  >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}<a  id="{{id}}-map" class="easyui-linkbutton" data-options="plain:true,iconCls:\'icon-search\'" style="float:right;display:inline;margin-left:10px" href="javascript:void(0)">MAP</a></div>\
+           <div class="clear"></div><div id="{{id}}-map-content" style="display:none;width: 420px; height: 300px"></div><div class="clear"></div>\
+           </div>\
           ',
          //Specify an alternate field template
          fieldPrice: '\
@@ -592,7 +621,7 @@
           ',
          field_plan_rooms: '\
             <div style="float:left;margin:20px 5px 5px 5px;display:block;"  >\
-             <a id="{{id}}_btn" href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:\'icon-search\'">Plan{{help}}</a>\
+             <a id="{{id}}_btn" href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:\'icon-search\'">Plan{{help}}</a>\
               <div  style="float:right;margin-left:5px">{{editor}}</div>\
             </div>\
           ',
@@ -619,6 +648,7 @@
           "haveFormShow":"addHaveForm"
         },
         initZayavkaEvents:function(){
+//            $.parser.parse("#id_zayavka");
             $("#z-created_at,#z-updated_at").attr({"disabled":"disabled","placeholder":"today"})
             if (App.action=="new"){
                 $("#zayavka_save").click(function(){App.models.zayavka.zayavkaSave();});
@@ -869,6 +899,18 @@
                 }
                 App.models.planirovka.show(params);
             });
+
+            //-----MAP------------------------------   map-content
+            $("#hh-"+index+"-orientir-map").on("click",function(e){
+                //alert("click map "+this.id)
+                var params={city_name:"Харьков",
+                            rayon_id:$("#hh-"+index+"-rayon_id").val(),
+                            street_id:$("#hh-"+index+"-street_id").val(),
+                            street_name:$("#hh-"+index+"-street_id :selected").text(),
+                            house_n:$("#hh-"+index+"-house_n").val(),
+                }
+                App.models.map.show("hh-"+index+"-orientir-map-content",params)
+            });
             $.parser.parse('#have-item-'+index);
             //----TAB title-------------------------
             //if (index==0){
@@ -888,7 +930,7 @@
              $("#hh-"+index+"-price_want").attr("size",8).css("color","green");
              $("#hh-"+index+"-house_n,"+"#hh-"+index+"-flat_n").attr("size",8);
              $("#hh-"+index+"-s_all,"+"#hh-"+index+"-s_live,"+"#hh-"+index+"-s_kux").attr("size",4);
-             $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",75);
+             $("#hh-"+index+"-orientir,"+"#hh-"+index+"-dop,"+"#hh-"+index+"-tel_1").attr("size",60);
              $("#hh-"+index+"-dop_param_1,"+"#hh-"+index+"-dop_param_2").css("width","480px");
             $("#hh-"+index+"-plan_rooms").attr("disabled",true)
              //$(".panel-header, .panel-body").css( {"border-color":"#95B8E7"," border-style":"solid","z-index":2000});
@@ -1059,7 +1101,7 @@
             }
             var content_new_tab=this.addHaveForm();
             console.log("addHaveTab")
-            console.log(content_new_tab)
+            //console.log(content_new_tab)
             $('#tbs-haves').tabs('add',{
                 title:"HaveObj",//this.getHaveTabTitle(),
                 content:content_new_tab,
@@ -1351,6 +1393,7 @@
                     );
 
                     $("#zayavka").html( zayavka_tpl_html );
+                    $.parser.parse("#id_zayavka");
                     this.correctZayavkaCSS();
 
 
@@ -1410,6 +1453,7 @@
     App.collections.wants.model=App.models.want
 
     App.models.zayavka.show(App.action);
+    App.models.map =  new Map();
  });//---ready
 </script>
 
@@ -1443,10 +1487,28 @@
   {{#ifCond action "new"}}
   {{/ifCond}}
 </script>
+<!--layout-fluid--->
+<script type="text/template" >
+  <div id="zayavka_layout" class="easyui-layout layout" style="width:1200px;height:800px;">
+    <div  data-options="region:'north',title:'Zayavka',split:true" style="height:120px;">
+      {{zayavka_item_html}}
+    </div>
+    <div id="haves_region" class="panel layout-panel layout-panel-west layout-split-west easyui-resizable" data-options="region:'west',title:'Haves',split:true" style="width:600px;float:right">
+      {{haves_tpl_html}}
+    </div>
+    <div id="wants_region" class="panel layout-panel layout-panel-east layout-split-east" data-options="region:'east',iconCls:'icon-reload',title:'Wants',split:true" style="width:580px;float:left">
+      {{wants_tpl_html}}
+    </div>
+
+  </div>
+</script>
+<!--layout-->
+
+
 <script type="text/template" id="zayavka-tpl">
- <!--<div class="Columns">-->
+
  <div id="zayavka_top_panel">
-  <div id="zayavka_in_panel"style="height: 120px;" class="easyui-panel" title="Zayavka"  data-options="fit:true,collapsible:true,tools:[
+  <div id="zayavka_in_panel" style="height: 120px;" class="easyui-panel" title="Zayavka"  data-options="fit:true,collapsible:true,tools:[
 			{{zayavka_tools_options}}
 			]">
   {{zayavka_item_html}}
@@ -1561,25 +1623,41 @@
 </script>
 <!---------------slider content---------------------->
 <script type="text/x-handlebars-template" id="slider-content">
-  <div  id="slider" class="flexslider">
-    aaa
-    <ul class="slides">
-      <li>
-        <img src="Planirovki/{{room}}-room/room_{{room}}_1.gif" />
-      </li>
-      <li>
-        <img src="Planirovki/{{room}}-room/room_{{room}}_2.gif" />
-      </li>
-      <li>
-        <img src="Planirovki/{{room}}-room/room_{{room}}_3.gif" />
-      </li>
-      <li>
-        <img src="Planirovki/{{room}}-room/room_{{room}}_4.gif" />
-      </li>
-      <!-- items mirrored twice, total of 12 -->
-    </ul>
+   <style type="text/css">
+   .slider-el{
+        type:"";
+        margin:5px; border-style: single; border-width: 3px;border-color:blue
+   }
+    .slider-el a {
+        padding:5px;
+    }
+   .slider-el:hover {
+        background: gray;
+        border-color: red;
+   }
+  </style>
+
+  <div class="easyui-layout" data-options="fit:true">
+    <div data-options="region:'west',split:true" style="width:200px">
+      <ul class="slides">
+        {{#each files}}
+        <li  class="slider-el">
+          /*<a onclick="javascript:$('#main_plan').html('<img width=\'100%\' height=\'100%\'  src=/assets/Planirovki/{{../room}}-room/{{this}}></img>')">*/
+          <a onclick="javascript:App.models.planirovka.setPlanImage('/assets/Planirovki/{{../room}}-room/{{this}}')" >
+            <%=  image_tag "Planirovki/{{../room}}-room/{{this}}",:size=>"110x110",:title=>"{{this}}" %>
+          </a>
+        </li>
+        {{/each}}
+
+      </ul>
+    </div>
+    <div data-options="region:'center'" style="padding:10px;">
+      <div id="main_plan" style="margin:5px;width:100%;height:100%"></div>
+    </div>
   </div>
-  <div  id="carousel" class="flexslider">ccc</div>
+
+
+
 </script>
 <!--  ******************************HTML*********************************** -->
 <div id="zayavka"></div>
