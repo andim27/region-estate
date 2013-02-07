@@ -521,7 +521,28 @@
         },
         idPrefix:"z-",
         model:  App.models.zayavka,
-        schema:
+        zayavka_fields_show:[],
+        <% if @action == "show" %>
+                schema:  //--action show
+                {
+                    id:    {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+                    name:  {type:'Text',editorAttrs:{disabled:"disabled"},template:'field',validators: ['required']},
+                    tel_1: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+                    tel_2: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+                    created_at: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+                    updated_at: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+                    status_name:     { type:'Text',editorAttrs:{disabled:"disabled"},template:'field'  },
+                    info_type_name:  { type:'Text',editorAttrs:{disabled:"disabled"},template:'field_clear' },
+                    info_source_name:{ type:'Text',editorAttrs:{disabled:"disabled"},template:'field' },
+                    contact_name:    { type:'Text',title:"Contact",editorAttrs:{disabled:"disabled"},template:'field' },
+                    dop:  {type:'Text',editorAttrs:{disabled:"disabled"},template:'field',template:'field'},
+                    published: {type: 'Checkbox',template:'field_br'}
+
+                }
+
+        <% else %>
+
+                schema: //----action new edit
                 {
                     id:    {type:'Number',template:'field'},
                     name:  {type:'Text',template:'field',validators: ['required']},
@@ -529,16 +550,15 @@
                     tel_2: {type:'Text',template:'field'},
                     created_at: {type:'Text',template:'field'},
                     updated_at: {type:'Text',template:'field'},
-                    status_id:  { type: 'Select', options:  [],template:'field'  },
-                    info_type_id:  { type: 'Select', options: [],template:'field_clear' },
-                    info_source_id:{ type: 'Select', options: [],template:'field' },
-                    contact_id: { type: 'Select',title:"Contact", options: [{val:0,label:"???"}],template:'field' },
+                    status_id:     { type: (App.action=="show"?'Text':'Select'), options: [],template:'field'  },
+                    info_type_id:  { type: (App.action=="show"?'Text':'Select'), options: [],template:'field_clear' },
+                    info_source_id:{ type: (App.action=="show"?'Text':'Select'), options: [],template:'field' },
+                    contact_id:    { type: (App.action=="show"?'Text':'Select'),title:"Contact", options: [{val:0,label:"???"}],template:'field' },
                     dop:  {type:'Text',template:'field',template:'field'},
-
                     published: {type: 'Checkbox',template:'field_br'}
 
                 }
-
+        <% end %>
     };//.render();
      //---------------Have Item form-------------------------
      //App.Have_item_form = Backbone.Form({
@@ -549,39 +569,72 @@
          },
          idPrefix:"hh-",
 //         model: App.models.haves,
+         <% if @action == "show" %>
          schema:{
-             obj_id: { type: 'Select',options:["111","222"],template:'field'},
-             room: {type:'Number',template:'field'},
-             price_estimate: {type:'Number',template:'field'},
-             price_want:{type:'Number',template:'field'},
-             torg:{type: 'Checkbox',template:'field'},
-             floor:{type:'Number',template:'field_clear'},
-             floor_house:  {type:'Number',template:'field'},
-             s_all: {type: 'Number',template:'field'},
-             s_live:{type: 'Number',template:'field'},
-             s_kux :{type: 'Number',template:'field'},
+             obj_name: { type: 'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+             room: {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             price_estimate: {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             price_want:{type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             torg:{type: 'Checkbox',editorAttrs:{disabled:"disabled"},template:'field'},
+             floor:{type:'Number',editorAttrs:{disabled:"disabled"},template:'field_clear'},
+             floor_house:  {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             s_all: {type: 'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             s_live:{type: 'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             s_kux :{type: 'Number',editorAttrs:{disabled:"disabled"},template:'field'},
 
-             rayon_id: {type: 'Select',options:[],template:'field_clear'},
-             street_id:{type: 'Select',options:[],template:'field'},
+             rayon_name: {type: 'Text',editorAttrs:{disabled:"disabled"},options:[],template:'field_clear'},
+             street_name:{type: 'Text',editorAttrs:{disabled:"disabled"},options:[],template:'field'},
 
-             house_n: {type: 'Text',template:'field_clear'},
-             flat_n:  {type: 'Text',template:'field'},
-             plan_rooms:    {type: 'Text',template:'field_plan_rooms',help:'plan rooms'},
-             orientir: {type: 'Text',template:'field_map'},
-
-
-             state_id:  {type:'Select',options:[],template:'field'},
-             year: {type:'Number',template:'field'},
-
-             tel_1:{type:'Text',template:'field_br'},
+             house_n: {type: 'Text',editorAttrs:{disabled:"disabled"},template:'field_clear'},
+             flat_n:  {type: 'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+             plan_rooms:    {type: 'Text',editorAttrs:{disabled:"disabled"},template:'field_plan_rooms',help:'plan rooms'},
+             orientir: {type: 'Text',editorAttrs:{disabled:"disabled"},template:'field_map'},
+             state_name:  {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+             year: {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
+             tel_1:{type:'Text',editorAttrs:{disabled:"disabled"},template:'field_br'},
 
              dop_param_1:{type:'Text',template:'field_clear'},
              dop_param_2:{type:'Text',template:'field_clear'},
-             dop:{type:'Text',template:'field_br'},
-            obmen_want:{type: 'Checkbox',template:'field_clear'},
-            sell_want: {type: 'Checkbox',template:'field'},
-            rent_want: {type: 'Checkbox',template:'field_br'}
+             dop:{type:'Text',editorAttrs:{disabled:"disabled"},template:'field_br'},
+             obmen_want:{type: 'Checkbox',editorAttrs:{disabled:"disabled"},template:'field_clear'},
+             sell_want: {type: 'Checkbox',editorAttrs:{disabled:"disabled"},template:'field'},
+             rent_want: {type: 'Checkbox'editorAttrs:{disabled:"disabled"},template:'field_br'}
          }
+         <% else %>
+             schema:{
+                 obj_id: { type: 'Select',options:["111","222"],template:'field'},
+                 room: {type:'Number',template:'field'},
+                 price_estimate: {type:'Number',template:'field'},
+                 price_want:{type:'Number',template:'field'},
+                 torg:{type: 'Checkbox',template:'field'},
+                 floor:{type:'Number',template:'field_clear'},
+                 floor_house:  {type:'Number',template:'field'},
+                 s_all: {type: 'Number',template:'field'},
+                 s_live:{type: 'Number',template:'field'},
+                 s_kux :{type: 'Number',template:'field'},
+
+                 rayon_id: {type: 'Select',options:[],template:'field_clear'},
+                 street_id:{type: 'Select',options:[],template:'field'},
+
+                 house_n: {type: 'Text',template:'field_clear'},
+                 flat_n:  {type: 'Text',template:'field'},
+                 plan_rooms:    {type: 'Text',template:'field_plan_rooms',help:'plan rooms'},
+                 orientir: {type: 'Text',template:'field_map'},
+
+
+                 state_id:  {type:'Select',options:[],template:'field'},
+                 year: {type:'Number',template:'field'},
+
+                 tel_1:{type:'Text',template:'field_br'},
+
+                 dop_param_1:{type:'Text',template:'field_clear'},
+                 dop_param_2:{type:'Text',template:'field_clear'},
+                 dop:{type:'Text',template:'field_br'},
+                 obmen_want:{type: 'Checkbox',template:'field_clear'},
+                 sell_want: {type: 'Checkbox',template:'field'},
+                 rent_want: {type: 'Checkbox',template:'field_br'}
+             }
+         <% end %>
      };
     //-----------------VIEWS----------------------------------
 
@@ -655,7 +708,7 @@
                 $("#z-id").attr({"disabled":"disabled","placeholder":0})
                 $("#z-published").val(1).attr("checked",1);
             }
-            if ((App.action=="view") || (App.action=="edit")){
+            if ((App.action=="show") || (App.action=="edit")){
                 $("#zayavka_save_btn").remove();
                 $("#z-id").attr({"disabled":"disabled","placeholder":App.models.zayavka.attributes.id})
                 this.bindZayavkaFormAttributes();
@@ -666,10 +719,14 @@
 
         bindZayavkaFormAttributes:function(){
             var model_fields=App.models.zayavka.zayavka_fields
+            if (App.action=="show") {//---"id" ,"info_type_name","info_source_name", вместо info_type_id","info_source_id
+                model_fields = App.models.zayavka.zayavka_fields.map(function(el){return el.replace(/_id/,"_name")})
+            }
             var model_attr=App.models.zayavka.attributes
             for (var i=0; i<model_fields.length;i++){
                 var field_name=model_fields[i]
                 var el=$("#z-"+field_name);
+                //console.log('field_name',field_name,' el=',el,'  model_attr[field_name]=',model_attr[field_name])
                 if ((el.prop("type")=="checkbox")&&(model_attr[field_name] ==1)){
                      el.prop("checked",true)
                 }
@@ -1360,13 +1417,21 @@
 
                     //Set the templates
                     Backbone.Form.setTemplates(App.templates,App.forms.zayavka_form);
-            //console.log("RENDER "+App.action);
-            //console.log(App.collections.infoSources.getSelectOptions());
+
                     App.zayavka_form.model=App.models.zayavka;
                     App.zayavka_form.fields=App.models.zayavka.zayavka_fields;
-                    App.zayavka_form.schema.info_source_id.options=App.collections.infoSources.getSelectOptions();
-                    App.zayavka_form.schema.info_type_id.options=App.collections.infoTypes.getSelectOptions();
-                    App.zayavka_form.schema.status_id.options=App.collections.statuses.getSelectOptions();
+                    if (App.action == "show"){
+                        App.zayavka_form.schema.info_source_name.value=App.models.zayavka.get('info_source_name');
+                        App.zayavka_form.schema.info_type_name.value=App.models.zayavka.get('info_type_name');
+                        App.zayavka_form.schema.status_name.value=App.models.zayavka.get('status_name');
+                        App.zayavka_form.schema.contact_name.value=App.models.zayavka.get('contact_name');
+                    } else {
+
+                        App.zayavka_form.schema.info_source_id.options=App.collections.infoSources.getSelectOptions();
+                        App.zayavka_form.schema.info_type_id.options=App.collections.infoTypes.getSelectOptions();
+                        App.zayavka_form.schema.status_id.options=App.collections.statuses.getSelectOptions();
+                    }
+
                     var data_tpl={};
                     if (App.action=="new"){
                         data_tpl={action_new:1,action:"new"}
@@ -1451,7 +1516,9 @@
 
     App.collections.haves.model=App.models.have
     App.collections.wants.model=App.models.want
-
+    if (App.action=="show"){
+        App.models.zayavka.set(JSON.parse('<%=@zayavka; %>'.replace(/&quot;/g,'"'))  )
+    }
     App.models.zayavka.show(App.action);
     App.models.map =  new Map();
  });//---ready
