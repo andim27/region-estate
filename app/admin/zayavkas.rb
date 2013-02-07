@@ -55,43 +55,72 @@ ActiveAdmin.register Zayavka do
       @states        = State.select("id,name").all.to_json
       @statuses      = Status.select("id,name").all.to_json
       @rayons        = Rayon.select("id,name").where("parent=2775").to_json
+      @dop_params    = DopParam.all.to_json
       #@rents         = HaveField.select("id,name,field_list").where("field_name='rent_want'")
       @dogovor='[{id:1,name:"no",{id:1,name:"excluzive"}}]'
       @rents = '[{id:1,name:"day"},{id:2,name:"week"},{id:3,name:"1-month"},{id:3,name:"2-3-month"},{id:4,name:"0.5 year"},{id:5,name:"year"}]'
 
     end
+
+    def getWantsData (z)
+      @wants=z.want
+      @wishlists=[]
+      @wants.each do |w|
+        @wishlists.push(w.wish_list)
+      end
+      @wishlists=@wishlists.to_json.html_safe
+      @wants=@wants.to_json
+    end
+
     def edit(options={}, &block)
       @zayavka_id=params[:id]
       @zayavka=Zayavka.find(@zayavka_id)
       #@haves=@zayavka.have
       @haves=Have.where(:zayavka_id=>@zayavka_id).to_json.html_safe
+
       @wants=@zayavka.want
       @wishlists=[]
       @wants.each do |w|
         @wishlists.push(w.wish_list)
       end
       @wishlists=@wishlists.to_json.html_safe
-
       @wants=@wants.to_json
+      ######getWantsData(@zayavka)
       @zayavka=@zayavka.to_json
       getListData("edit")
-      render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
+      render :template=>'admin/_zayavka_crud',:formats => [:html],:layout =>"active_admin"
 
     end
     def new
         @action="new"
         @zayavka_id=0
         getListData("new")
-        render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
+        render :template=>'admin/_zayavka_crud',:formats => [:html],:layout =>"active_admin"
     end
     def show
       @action="show"
       @zayavka_id=params[:id]
-      ##ActiveRecord::Base.include_root_in_json = false
+      @objs = Obj.select("id,name").all.to_json
+      ##@zayavka=Zayavka.find(@zayavka_id)
+      @zayavka=Zayavka.fields_relation_name(@zayavka_id)[0].to_json.html_safe
       @zayavka_fields=Zayavka.column_names;
+      @haves=Have.haves_relation_name(@zayavka_id.to_i).to_json.html_safe
+      @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
+
+      @wants=Want.where("zayavka_id=?", @zayavka_id)
+      @wishlists=[]
+      @wants.each do |w|
+        @wishlists.push(w.wish_list)
+      end
+      @wishlists=@wishlists.to_json.html_safe
+      @wants=@wants.to_json
+      ###########getWantsData(@zayavka)
+      @dop_params    = DopParam.all.to_json
       render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
     end
-
+    def delete
+      render :text=>"delet zayavka"
+    end
     def scoped_collection
      if params[:filterhave].present?
        cond_str=" 1=1 "
@@ -208,15 +237,19 @@ ActiveAdmin.register Zayavka do
       #out_str
     end
     column :want do |rec|
-      if rec.have.length>=1 and rec.have[0].sell_want !=0
+      if not rec.have.blank?
+        if (not rec.have[0].sell_want.blank?)  and (not rec.have[0].price_want.blank?)
          span "sell_want:"+rec.have[0].price_want.to_s, :title=>"This is:\n "+(rec.have[0].price_want*8).to_s+" grn"
          br
+        end
+      else
+        span "EMPTY"
       end
       out_str=""
-      if !rec.want.empty?
+      if not rec.want.blank?
         rec.want.each do |w|
-          if 1==1 # w.obj.id==1 and v.obj.id != nil # doplata
-            span (w.obj.name+":"+w.price_want.to_s) if w.price_want !=0
+          if (not w.obj.blank?)  and w.obj.id == 1 and (not w.price_want.blank?) # doplata
+            span (w.obj.name+":"+w.price_want.to_s) if not w.price_want.blank?
           else #objects
             span w.room       if w.room !=0
             span w.obj.name   if w.obj != nil
