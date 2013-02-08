@@ -1,0 +1,21 @@
+<h1>Listing rayons_admins</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @rayons_admins.each do |rayons_admin| %>
+  <tr>
+    <td><%= link_to 'Show', rayons_admin %></td>
+    <td><%= link_to 'Edit', edit_rayons_admin_path(rayons_admin) %></td>
+    <td><%= link_to 'Destroy', rayons_admin, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Rayons admin', new_rayons_admin_path %>

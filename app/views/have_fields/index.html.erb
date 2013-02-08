@@ -1,0 +1,33 @@
+<h1>Listing have_fields</h1>
+
+<table>
+  <tr>
+    <th>Id</th>
+    <th>Name</th>
+    <th>Field name</th>
+    <th>Field type</th>
+    <th>Field ui type</th>
+    <th>Field ds</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @have_fields.each do |have_field| %>
+  <tr>
+    <td><%= have_field.id %></td>
+    <td><%= have_field.name %></td>
+    <td><%= have_field.field_name %></td>
+    <td><%= have_field.field_type %></td>
+    <td><%= have_field.field_ui_type %></td>
+    <td><%= have_field.field_ds %></td>
+    <td><%= link_to 'Show', have_field %></td>
+    <td><%= link_to 'Edit', edit_have_field_path(have_field) %></td>
+    <td><%= link_to 'Destroy', have_field, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Have field', new_have_field_path %>

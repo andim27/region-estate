@@ -1,0 +1,29 @@
+<table>
+    <tr>
+        <td width="50%">
+            <p>Меняю:</p>
+        <%  if items[:have_items] !=nil %>
+          <%=  items[:have_items].each do |h_item|  %>
+              <p><%= h_item.room %> - <%= h_item.obj.name %>, <%= h_item.rayon.name %>,<%=h_item.floor %>/<%=h_item.floor_house %></p>
+              <% if !(h_item.street.nil?) %>
+                  <p><%= h_item.street.name %></p>
+              <% end %>
+              <% if !h_item.orientir.empty? %>
+                  <p><%= h_item.orientir %></p>
+              <% end %>
+              <p>Площадь: <%= h_item.s_all==0?"?":h_item.s_all %><span>/</span><%= h_item.s_live==0?"?":h_item.s_live %><span>/</span><%= h_item.s_kux==0?"?":h_item.s_kux %></p>
+              <p><%= h_item.dop %></p>
+              <p align="center"><span>+</span></p>
+          <% end %>
+        <% end %>
+        </td>
+        <td style="vertical-align:middle;"><span  align="center">НА</span></td>
+        <td  width="30%">
+
+        </td>
+        <td  width="10%">
+           <p>Тел</p>
+
+        </td>
+    </tr>
+</table>

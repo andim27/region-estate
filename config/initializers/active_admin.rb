@@ -134,8 +134,9 @@ ActiveAdmin.setup do |config|
   #
   # To load a stylesheet:
   config.register_stylesheet 'bb-forms.css'
-  config.register_stylesheet 'themes/gray/easyui.css'
+  config.register_stylesheet 'themes/default/easyui.css'   #gray
   config.register_stylesheet 'themes/icon.css'
+  ###config.register_stylesheet 'bootstrap.min.css'
 
   # You can provide an options hash for more control, which is passed along to stylesheet_link_tag():
   #   config.register_stylesheet 'my_print_stylesheet.css', :media => :print
@@ -143,6 +144,7 @@ ActiveAdmin.setup do |config|
   # To load a javascript file:
   #   config.register_javascript 'my_javascript.js'
 	###config.register_javascript 'http://api-maps.yandex.ru/2.0/?load=package.full,util.json&lang=ru-RU'
+	###config.register_javascript 'bootstrap.min'
 
   #config.register_javascript 'http://maps.googleapis.com/maps/api/js?key=AIzaSyD9z0Zf1Y_WLfxmcTGhStBz_5xDR3rInjA&sensor=false'
   ##config.register_javascript 'http://maps.googleapis.com/maps/api/js?key=AIzaSyDKby9ZeqnHtkB-0ATLN-1r0Ky3_tyGb3U&sensor=false'

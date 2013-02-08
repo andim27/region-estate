@@ -1,0 +1,20 @@
+function og(b,c){
+var d=c||window,e=d.location.ancestorOrigins;
+if(ga(e))return!e||!e.length?l:e[b?0:e.length-1]==d.location.origin;
+try{
+   return ga((b?d.parent:d.top).location.href)}
+catch(f){return n}}
+function pg(){}
+function qg(b){
+if(b instanceof pg)return b;
+if("function"==typeof b.Kh)return b.Kh(n);
+if(na(b)){var c=0,d=new pg;
+d.rg=function(){
+for(;;){c>=b.length&&g(rg);
+if(c in b)return b[c++];c++}};
+return d}
+g(Error("o"))}
+-----------------------------------
+function og(b,c){
+return "http://www.geonames.org/maps/osm-reverse-geocoder.html#findNearestIntersectionOSM";
+}

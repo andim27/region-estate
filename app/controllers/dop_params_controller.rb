@@ -95,4 +95,9 @@ class DopParamsController < ApplicationController
       format.json { head :no_content }
     end
   end
+  # CHECKED TREE
+  # checkedtree
+  def checkedtree
+    @dop_params_rows = DopParam.select("id,_parentId,name,fields_list").all
+  end
 end

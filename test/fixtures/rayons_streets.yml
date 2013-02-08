@@ -1,0 +1,9 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  rayon_id: 1
+  street_id: 1
+
+two:
+  rayon_id: 1
+  street_id: 1

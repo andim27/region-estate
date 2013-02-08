@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ruby on Rails: Welcome aboard</title>
+ <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>  
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+    <style type="text/css" media="screen">
+      body {
+        margin: 0;
+        margin-bottom: 25px;
+        padding: 0;
+        background-color: #f0f0f0;
+        font-family: "Lucida Grande", "Bitstream Vera Sans", "Verdana";
+        font-size: 13px;
+        color: #333;
+      }
+
+      h1 {
+        font-size: 28px;
+        color: #000;
+      }
+
+      a  {color: #03c}
+      a:hover {
+        background-color: #03c;
+        color: white;
+        text-decoration: none;
+      }
+
+
+      #page {
+        background-color: #f0f0f0;
+        width: 750px;
+        margin: 0;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #content {
+        float: left;
+        background-color: white;
+        border: 3px solid #aaa;
+        border-top: none;
+        padding: 25px;
+        width: 500px;
+      }
+
+      #sidebar {
+        float: right;
+        width: 175px;
+      }
+
+      #footer {
+        clear: both;
+      }
+
+      #header, #about, #getting-started {
+        padding-left: 75px;
+        padding-right: 30px;
+      }
+
+
+      #header {
+        background-image: url("assets/rails.png");
+        background-repeat: no-repeat;
+        background-position: top left;
+        height: 64px;
+      }
+      #header h1, #header h2 {margin: 0}
+      #header h2 {
+        color: #888;
+        font-weight: normal;
+        font-size: 16px;
+      }
+
+
+      #about h3 {
+        margin: 0;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      #about-content {
+        background-color: #ffd;
+        border: 1px solid #fc0;
+        margin-left: -55px;
+        margin-right: -10px;
+      }
+      #about-content table {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        font-size: 11px;
+        border-collapse: collapse;
+      }
+      #about-content td {
+        padding: 10px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+      }
+      #about-content td.name  {color: #555}
+      #about-content td.value {color: #000}
+
+      #about-content ul {
+        padding: 0;
+        list-style-type: none;
+      }
+
+      #about-content.failure {
+        background-color: #fcc;
+        border: 1px solid #f00;
+      }
+      #about-content.failure p {
+        margin: 0;
+        padding: 10px;
+      }
+
+
+      #getting-started {
+        border-top: 1px solid #ccc;
+        margin-top: 25px;
+        padding-top: 15px;
+      }
+      #getting-started h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      #getting-started h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: normal;
+        color: #333;
+        margin-bottom: 25px;
+      }
+      #getting-started ol {
+        margin-left: 0;
+        padding-left: 0;
+      }
+      #getting-started li {
+        font-size: 18px;
+        color: #888;
+        margin-bottom: 25px;
+      }
+      #getting-started li h2 {
+        margin: 0;
+        font-weight: normal;
+        font-size: 18px;
+        color: #333;
+      }
+      #getting-started li p {
+        color: #555;
+        font-size: 13px;
+      }
+
+
+      #sidebar ul {
+        margin-left: 0;
+        padding-left: 0;
+      }
+      #sidebar ul h3 {
+        margin-top: 25px;
+        font-size: 16px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+      }
+      #sidebar li {
+        list-style-type: none;
+      }
+      #sidebar ul.links li {
+        margin-bottom: 5px;
+      }
+
+      .filename {
+        font-style: italic;
+      }
+    </style>
+    <script type="text/javascript">
+      function about() {
+        info = document.getElementById('about-content');
+        if (window.XMLHttpRequest)
+          { xhr = new XMLHttpRequest(); }
+        else
+          { xhr = new ActiveXObject("Microsoft.XMLHTTP"); }
+        xhr.open("GET","rails/info/properties",false);
+        xhr.send("");
+        info.innerHTML = xhr.responseText;
+        info.style.display = 'block'
+      }
+    </script>
+  </head>
+  <body>
+    <div id="page">
+      <div id="sidebar">
+        <ul id="sidebar-items">
+          <li>
+            <h3>Browse the documentation</h3>
+            <ul class="links">
+              <li><a href="http://guides.rubyonrails.org/">Rails Guides</a></li>
+              <li><a href="http://api.rubyonrails.org/">Rails API</a></li>
+              <li><a href="http://www.ruby-doc.org/core/">Ruby core</a></li>
+              <li><a href="http://www.ruby-doc.org/stdlib/">Ruby standard library</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div id="content">
+          <p>
+              <script>
+                  $(function() {
+                      $( "#tbs" ).tabs({
+                          event: "mouseover",
+                          heightStyle: "fill"
+                      });
+                  });
+              </script>
+          <div class="panel">
+              <h3>Zayavka</h3>
+              <div id="tbs">
+                  <ul>
+                      <li><a href="#tbs-1">Nunc tincidunt</a></li>
+                      <li><a href="#tbs-2">Proin dolor</a></li>
+                      <li><a href="#tbs-3">Aenean lacinia</a></li>
+                  </ul>
+                  <div id="tbs-1">
+                      <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
+                  </div>
+                  <div id="tbs-2">
+                      <p>Morbi tincidunt, dui sit amet facilisis feugiat, odio metus gravida ante, ut pharetra massa metus id nunc. Duis scelerisque molestie turpis. Sed fringilla, massa eget luctus malesuada, metus eros molestie lectus, ut tempus eros massa ut dolor. Aenean aliquet fringilla sem. Suspendisse sed ligula in ligula suscipit aliquam. Praesent in eros vestibulum mi adipiscing adipiscing. Morbi facilisis. Curabitur ornare consequat nunc. Aenean vel metus. Ut posuere viverra nulla. Aliquam erat volutpat. Pellentesque convallis. Maecenas feugiat, tellus pellentesque pretium posuere, felis lorem euismod felis, eu ornare leo nisi vel felis. Mauris consectetur tortor et purus.</p>
+                  </div>
+                  <div id="tbs-3">
+                      <p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>
+                      <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+                  </div>
+              </div>
+          </div>
+          <div class="panel">
+              <h3>Haves</h3>
+              <p>Set what you have</p>
+          </div>
+          <div class="panel">
+              <h3>Wants</h3>
+              <p>Set what you want</p>
+          </div>
+          <fieldset class="actions">
+              <ol>
+                  <input type="submit" value="Save zayavka" name="commit">
+                  <a href="/admin/zayavkas">Cancel</a>
+              </ol>
+          </fieldset>
+
+          </p>
+        <div id="header">
+          <h1>Welcome aboard</h1>
+          <h2>You&rsquo;re riding Ruby on Rails!</h2>
+        </div>
+
+        <div id="about">
+          <h3><a href="rails/info/properties" onclick="about(); return false">About your application&rsquo;s environment</a></h3>
+          <div id="about-content" style="display: none"></div>
+        </div>
+
+        <div id="getting-started">
+          <h1>Getting started</h1>
+          <h2>Here&rsquo;s how to get rolling:</h2>
+
+          <ol>
+            <li>
+              <h2>Use <code>rails generate</code> to create your models and controllers</h2>
+              <p>To see all available options, run it without parameters.</p>
+            </li>
+
+            <li>
+              <h2>Set up a default route and remove <span class="filename">public/index.html</span></h2>
+              <p>Routes are set up in <span class="filename">config/routes.rb</span>.</p>
+            </li>
+
+            <li>
+              <h2>Create your database</h2>
+              <p>Run <code>rake db:create</code> to create your database. If you're not using SQLite (the default), edit <span class="filename">config/database.yml</span> with your username and password.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="footer">&nbsp;</div>
+    </div>
+  </body>
+</html>

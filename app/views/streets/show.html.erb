@@ -1,0 +1,21 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Id:</b>
+  <%= @street.id %>
+</p>
+
+<p>
+  <b>Name:</b>
+  <%= @street.name %>
+</p>
+
+<p>
+  <b>Name rus:</b>
+  <%= @street.name_rus %>
+</p>
+ <%= image_tag "rails.png"  %>
+ <%= image_tag "Planirovki/1-room/house_9_kirp.gif"  %>
+
+<%= link_to 'Edit', edit_street_path(@street) %> |
+<%= link_to 'Back', streets_path %>

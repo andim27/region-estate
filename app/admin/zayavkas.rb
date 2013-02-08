@@ -1,4 +1,5 @@
 ActiveAdmin.register Zayavka do
+  config.batch_actions = true
   #config.sort_order = "id_asc"
   config.sort_order = "id_desc"
   ##config.register_stylesheet 'simpletabs.css'
@@ -104,7 +105,7 @@ ActiveAdmin.register Zayavka do
       ##@zayavka=Zayavka.find(@zayavka_id)
       @zayavka=Zayavka.fields_relation_name(@zayavka_id)[0].to_json.html_safe
       @zayavka_fields=Zayavka.column_names;
-      @haves=Have.haves_relation_name(@zayavka_id.to_i).to_json.html_safe
+      @haves=Have.haves_relation_name(@zayavka_id.to_i).to_json.html_safe.gsub(/\n/,'')
       @havefields    = HaveField.select("id,name,field_name,field_ui_type").all.to_json
 
       @wants=Want.where("zayavka_id=?", @zayavka_id)
@@ -119,7 +120,7 @@ ActiveAdmin.register Zayavka do
       render :template=>'admin/_zayavka_crud.html' ,:layout =>"active_admin"
     end
     def delete
-      render :text=>"delet zayavka"
+      render :text=>"delete zayavka"
     end
     def scoped_collection
      if params[:filterhave].present?
@@ -191,10 +192,18 @@ ActiveAdmin.register Zayavka do
   #  render :text=>"Edit member #{params[:id]}"
   #
   #end
-
+  batch_action :published do |selection|
+    Zayavka.find(selection).each do |item|
+      item.published=( item.published ==true)?false:true
+      item.save!
+    end
+    redirect_to :back
+  end
   #-------------------------------------------TABLE----------------------
   index :as=>:table do
-    column :id
+    selectable_column
+    id_column
+    #column :id
     column :created_at, :sortable => :created_at do |rec|
       span rec.created_at.to_date
       if rec.have.length>=1 and rec.have[0].obmen_want !=nil and rec.have[0].obmen_want != 0

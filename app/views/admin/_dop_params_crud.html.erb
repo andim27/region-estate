@@ -57,15 +57,7 @@
    var objs_json=eval('<%= @obj_rows %>'.replace(/&quot;/g,'"'));
    var data_json={"total":<%= @total_rows %>,"rows":eval('<%= @dop_params_rows %>'.replace(/&quot;/g,'"'))}
    console.log("objs_json="+objs_json)
-//        var data_json={"total":7,"rows":[
-//            {"id":1,"name":"All Tasks","begin":"3/4/2010","end":"3/20/2010","progress":60,"iconCls":"icon-ok"},
-//            {"id":2,"name":"Designing","begin":"3/4/2010","end":"3/10/2010","progress":100,"_parentId":1,"state":"closed"},
-//            {"id":21,"name":"Database","persons":2,"begin":"3/4/2010","end":"3/6/2010","progress":100,"_parentId":2},
-//            {"id":22,"name":"UML","persons":1,"begin":"3/7/2010","end":"3/8/2010","progress":100,"_parentId":2},
-//            {"id":23,"name":"Export Document","persons":1,"begin":"3/9/2010","end":"3/10/2010","progress":100,"_parentId":2},
-//            {"id":3,"name":"Coding","persons":2,"begin":"3/11/2010","end":"3/18/2010","progress":80},
-//            {"id":4,"name":"Testing","persons":1,"begin":"3/19/2010","end":"3/20/2010","progress":20}
-//        ]};
+
 
         var tools= [
             {
@@ -213,10 +205,21 @@
             }
         }
         function onClickRow(row){
-           console.log("Row.id="+row.id)
+           console.log("Row.id="+row.id+"row._parentId="+row._parentId)
+        }
+        function collapseAll(){
+            var L=data_json.total;
+            for (var i=0;i<L;i++){
+                var  node = $('#tg').treegrid('find',data_json['rows'][i].id);
+                console.log("node.id="+node.id)
+                if (node._parentId == 0 ) {
+                    $('#tg').treegrid('collapse',i);
+                }
+            }
         }
         //-----------------main--------------------
         $.parser.parse("#tg");
+
    ///// });
 </script>
 
@@ -257,9 +260,7 @@
 								required:true
 							}
 						}">Fields_list</th>
-      <!--<th data-options="field:'begin',width:80">Begin Date</th>-->
-      <!--<th data-options="field:'end',width:80">End Date</th>-->
-      <!--<th data-options="field:'progress',width:120">Progress</th>-->
+
     </tr>
     </thead>
   </table>
@@ -270,6 +271,8 @@
     <div class="menu-sep"></div>
     <div onclick="collapse()">Collapse</div>
     <div onclick="expand()">Expand</div>
+    <div class="menu-sep"></div>
+    <div onclick="collapseAll()">Collapse All</div>
   </div>
 
 </div>

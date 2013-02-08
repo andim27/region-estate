@@ -1,0 +1,35 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Id:</b>
+  <%= @have_field.id %>
+</p>
+
+<p>
+  <b>Name:</b>
+  <%= @have_field.name %>
+</p>
+
+<p>
+  <b>Field name:</b>
+  <%= @have_field.field_name %>
+</p>
+
+<p>
+  <b>Field type:</b>
+  <%= @have_field.field_type %>
+</p>
+
+<p>
+  <b>Field ui type:</b>
+  <%= @have_field.field_ui_type %>
+</p>
+
+<p>
+  <b>Field ds:</b>
+  <%= @have_field.field_ds %>
+</p>
+
+
+<%= link_to 'Edit', edit_have_field_path(@have_field) %> |
+<%= link_to 'Back', have_fields_path %>

@@ -1,0 +1,21 @@
+<h1>Listing dop_params</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @dop_params.each do |dop_param| %>
+  <tr>
+    <td><%= link_to 'Show', dop_param %></td>
+    <td><%= link_to 'Edit', edit_dop_param_path(dop_param) %></td>
+    <td><%= link_to 'Destroy', dop_param, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Dop param', new_dop_param_path %>

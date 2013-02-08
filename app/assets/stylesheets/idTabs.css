@@ -1,0 +1,102 @@
+﻿.usual {
+    background: none repeat scroll 0 0 #181818;
+    border: 1px solid #222222;
+    color: #111111;
+    margin: 8px auto;
+    padding: 15px 20px;
+    width: 500px;
+}
+.usual li {
+    float: left;
+    list-style: none outside none;
+}
+.usual ul a {
+    background: none repeat scroll 0 0 #444444;
+    color: #FFFFFF;
+    display: block;
+    font: 10px Verdana;
+    margin: 1px 1px 1px 0;
+    padding: 6px 10px;
+    text-decoration: none !important;
+}
+.usual ul a:hover {
+    background: none repeat scroll 0 0 #111111;
+    color: #FFFFFF;
+}
+.usual ul a.selected {
+    background: none repeat scroll 0 0 snow;
+    border-bottom: 1px solid snow;
+    color: #000000;
+    cursor: default;
+    margin-bottom: 0;
+}
+.usual div {
+    background: none repeat scroll 0 0 snow;
+    clear: left;
+    font: 10pt Georgia;
+    padding: 10px 10px 8px;
+}
+.usual div a {
+    color: #000000;
+    font-weight: bold;
+}
+#usual2 {
+    background: none repeat scroll 0 0 #0A0A0A;
+    border: 1px solid #1A1A1A;
+}
+#usual2 a {
+    background: none repeat scroll 0 0 #222222;
+}
+#usual2 a:hover {
+    background: none repeat scroll 0 0 #000000;
+}
+#usual2 a.selected {
+    background: none repeat scroll 0 0 snow;
+}
+#tabs3 {
+    background: none repeat scroll 0 0 #FFFF99;
+}
+#freedom {
+    color: #6688DD;
+    float: left;
+    font: italic 1.3em Cambria,Times New Roman,serif;
+    width: 90px;
+}
+#freedom li a {
+    background: none repeat scroll 0 0 #222222;
+    display: block;
+    font-size: 0.7em;
+    font-style: normal;
+    font-weight: bold;
+    margin: 1px;
+    padding: 2px 6px 4px;
+    text-align: left;
+    text-decoration: none;
+    width: 80px;
+}
+#freedom li a:hover {
+    background: none repeat scroll 0 0 #0A0A0A;
+    width: 86px;
+}
+#freedom li a.selected {
+    background: none repeat scroll 0 0 #FFFFFF;
+    color: #000000;
+    cursor: default;
+    width: 90px;
+}
+.tabContainer {
+    background: none repeat scroll 0 0 #181818;
+    border: 1px solid #222222;
+    margin: 20px auto;
+    padding-top: 2px;
+    width: 400px;
+}
+.tabContainer h3 {
+    color: #FF6600;
+    padding-bottom: 4px;
+}
+.tabContainer p {
+    padding: 2px 12px 10px;
+    text-align: left;
+}
+

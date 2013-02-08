@@ -911,7 +911,7 @@
             $("#hh-"+index+"-orientir-map").on("click",function(e){
                 //alert("click map "+this.id)
                 var params={city_name:"Харьков",
-                    street_name:$("#hh-"+index+"-street_name").text(),
+                    street_name:$("#hh-"+index+"-street_name").val(),
                     house_n:$("#hh-"+index+"-house_n").val(),
                 }
                 App.models.map.show("hh-"+index+"-orientir-map-content",params)
@@ -1540,6 +1540,7 @@
      App.collections.haves   =new App.Haves();
      if (App.action=="show"){
          haves_str=JSON.parse('<%=@haves; %>'.replace(/&quot;/g,'"'));
+         //haves_str=eval('<%=@haves; %>'.replace(/&quot;/g,'"'));
      } else {
          haves_str=eval('<%=@haves; %>'.replace(/&quot;/g,'"'));
      }

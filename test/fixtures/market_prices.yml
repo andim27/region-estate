@@ -1,0 +1,23 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  id: 1
+  obj_id: 1
+  room: 1
+  s_all: 1
+  rayon_id: 1
+  price_min: 
+  price_max: 
+  price: 
+  price_1m2: 
+
+two:
+  id: 1
+  obj_id: 1
+  room: 1
+  s_all: 1
+  rayon_id: 1
+  price_min: 
+  price_max: 
+  price: 
+  price_1m2: 

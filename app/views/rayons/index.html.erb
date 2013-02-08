@@ -1,0 +1,21 @@
+<h1>Listing rayons</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @rayons.each do |rayon| %>
+  <tr>
+    <td><%= link_to 'Show', rayon %></td>
+    <td><%= link_to 'Edit', edit_rayon_path(rayon) %></td>
+    <td><%= link_to 'Destroy', rayon, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Rayon', new_rayon_path %>

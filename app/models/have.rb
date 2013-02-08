@@ -14,7 +14,7 @@ class Have < ActiveRecord::Base
     #begin
     #if ActiveRecord::Base.connection_config[:adapter].include?("mysql")
          #----(SELECT group_concat(convert(dp.name,char(15)))as str FROM dop_params as dp WHERE ( haves.dop_param_1 LIKE concat('%',cast(dp.id as char),'%') ))
-         Have.select("haves.*,objs.name as obj_name,states.name as state_name,rayons.name as rayon_name,streets.name_rus as street_name")
+         Have.select("haves.*,objs.name as obj_name,states.name as state_name,TRIM(rayons.name) as rayon_name,TRIM(streets.name_rus) as street_name ")
          .joins("LEFT JOIN objs    ON objs.id=haves.obj_id")
          .joins("LEFT JOIN states  ON states.id=haves.state_id")
          .joins("LEFT JOIN rayons  ON rayons.id=haves.rayon_id")

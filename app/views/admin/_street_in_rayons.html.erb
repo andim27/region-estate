@@ -1,0 +1,28 @@
+﻿<h2>Select rayon</h2>
+<% rayon_names=Rayon.where("parent=2775 ").select("id,name").order("name") %>
+<script type="text/javascript">
+   $(document).ready(function() {
+        if (window.location.search.match(/rrr/) !=null) {
+            r_id=window.location.search.split("=")[1]
+            $("#q_rayons_name").val(parseInt(r_id))
+        }
+   });
+  function filterRayonUrl(){
+      window.location.href='/admin/streets?rrr='+$("#q_rayons_name").val();
+  }
+  function clearRayonUrl(){
+      window.location.href='/admin/streets';
+  }
+</script>
+
+<!--<form id="rayon_search" class="filter_form" method="get" action="/admin/streets?rrr=" accept-charset="UTF-8"  onSubmit="return doThis(this.commit)">-->
+
+<%= select_tag(:q_rayons_name,options_from_collection_for_select(rayon_names, "id", "name"), :prompt => "Select rayon" ) %>
+<br><br>
+<div class="buttons">
+  <input type="submit" value="Filter" name="commit" onclick="filterRayonUrl();" >
+  <a class="clear_filters_btn" href="javascript:clearRayonUrl();">Clear Filters</a>
+  <input id="order" type="hidden" value="id_asc" name="order">
+</div>
+<!--
+</form>-->

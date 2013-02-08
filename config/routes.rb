@@ -1,12 +1,17 @@
 Estate::Application.routes.draw do
+  resources :dop_params
+
   resources :have_fields
 
   ActiveAdmin.routes(self)
 
   devise_for :admin_users, ActiveAdmin::Devise.config
 
+  match 'haves/uploadify' => 'haves#uploadify', :via=>[:post,:put]
+
   resources :streets
   resources :info_sources
+  resources :dop_params
   resources :info_types
   resources :rayons
   resources :zayavkas
@@ -15,6 +20,10 @@ Estate::Application.routes.draw do
   resources :wish_lists
   resources :HaveFields
 
+  match 'haves/planirovki/:id' => 'haves#planirovki', :via=>[:get] ##:constraints => {:id => /^\d/}
+
+  #map.connect 'static/:path', :controller => 'static', :action => 'show'
+  match  'admin/static/dop_params', :controller => 'static', :action => 'index'
   #match 'zayavkas' => 'zayavkas#create', :via => :put
   match 'streets/inrayon/:id' => 'streets#inrayon'
   #match 'admin/rayons_geo/:action' => 'admin/rayons_geo', :action => /w+/

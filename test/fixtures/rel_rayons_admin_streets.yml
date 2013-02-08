@@ -1,0 +1,9 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  id_rayon_admin: 1
+  id_street_ukr: 1
+
+two:
+  id_rayon_admin: 1
+  id_street_ukr: 1

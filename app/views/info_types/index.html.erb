@@ -1,0 +1,21 @@
+<h1>Listing info_types</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @info_types.each do |info_type| %>
+  <tr>
+    <td><%= link_to 'Show', info_type %></td>
+    <td><%= link_to 'Edit', edit_info_type_path(info_type) %></td>
+    <td><%= link_to 'Destroy', info_type, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Info type', new_info_type_path %>

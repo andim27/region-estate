@@ -1,3 +1,4 @@
 class WishList < ActiveRecord::Base
-  has_many :want
+  belongs_to :want
+
 end

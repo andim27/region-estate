@@ -1,0 +1,24 @@
+<% content_for :head do %>
+    <%= javascript_include_tag 'http://api-maps.yandex.ru/2.0/?load=package.full,util.json&lang=ru-RU' %>
+<% end %>
+<h3>Right click - current coordinate(Lat-широта,Long-долгота)</h3>
+<%#= javascript_include_tag 'http://api-maps.yandex.ru/2.0/?load=package.full,util.json&lang=ru-RU' %>
+<%= javascript_include_tag 'http://api-maps.yandex.ru/2.0/?load=package.full,util.json&lang=ru-RU' %>
+<%= javascript_include_tag "active_admin_rayons_geo" %>
+<% rayon_names=Rayon.where("parent=2775 ").select("id,name").order("name") %>
+<%= select_tag(:rayons_name,options_from_collection_for_select(rayon_names, "id", "name"), :prompt => "Select rayon" ) %>
+<div style="display:inline">
+<label>Широта:</label><input id="lat_center" type="text" size="10"/>
+<label>Долгота:</label><input id="long_center" type="text" size="10"/>
+<button onclick="setCenter();">Set center</button>
+</div>
+<br><br>
+<div id="map" style="width: 60%; height: 400px; position: relative; background-color: rgb(229, 227, 223); overflow: hidden;float:right"></div>
+<div id="geometry"/>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#sidebar").css("margin-left","0px")
+    });
+</script>
+
+

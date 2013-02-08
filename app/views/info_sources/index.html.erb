@@ -1,0 +1,22 @@
+<h1>Listing info_sources</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @info_sources.each do |info_source| %>
+  <tr>
+    <td><%=  info_source.name %></td>
+    <td><%= link_to 'Show', info_source %></td>
+    <td><%= link_to 'Edit', edit_info_source_path(info_source) %></td>
+    <td><%= link_to 'Destroy', info_source, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Info source', new_info_source_path %>

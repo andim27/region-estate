@@ -1,0 +1,65 @@
+  //---DOP_param-----------------------------
+           /// var dp_par_arr_1=App.collections.dop_params.getSelectTree([1,2,3,4,5,7,8]);
+            ///var dp_par_arr_2=App.collections.dop_params.getSelectTree([6,9,10]);
+            ///$("#hh-"+index+"-dop_param_1").combotree({data:dp_par_arr_1,multiple:true,separator:', ',cascadeCheck:false});
+            ///$("#hh-"+index+"-dop_param_2").combotree({data:dp_par_arr_2,multiple:true,separator:', ',cascadeCheck:false});
+            //.collapseAll()
+           
+
+
+         getSelectTree:function(id_arr){
+             var out=[],done_arr=[],rows=[];
+             if (id_arr != undefined) {
+                 rows=this.filter(function (el) {
+                     if (id_arr.indexOf(el.id) !=-1){return el;}
+                 });
+             } else {
+                rows=this.models;
+             }
+             for (var rec in rows) { //--level 0
+
+                 if (rows[rec].attributes._parentId==0) {
+                     out.push({id:rows[rec].attributes.id,text:rows[rec].attributes.name});
+                     done_arr.push(rec)
+                 }
+             }
+
+             for (var rec in out) { //--level 1
+                 //console.log("--level--1")
+                 //console.log("_parentId="+out[rec].id)
+                 var sub_rec=this.where({_parentId:out[rec].id});
+                 //console.log(sub_rec)
+                 out[rec]["children"]=[]
+                 for (var rec_2 in sub_rec) {
+                     //console.log("sub_rec")
+                     //console.log(sub_rec[rec_2])
+                     var node=sub_rec[rec_2];
+                     out[rec]["children"].push({id:node.attributes.id,text:node.attributes.name});
+
+                 }
+
+             }
+             //console.log("FIND for !!!-------------")
+             //console.log(out)
+             for (var rec in out) { //--level 0
+                 sub_nodes=out[rec]
+                 if (sub_nodes.children !=undefined) {
+                     nodes_1=sub_nodes.children
+                     for (var rec_sub in nodes_1){ //--level 1
+//                         console.log("sub_nodes for !!!"+rec_sub)
+//                         console.log(rec_sub)
+                         sub2_nodes = this.where({_parentId:nodes_1[rec_sub].id})
+//                          console.log("FIND for !!!"+rec_sub.id)
+//                          console.log(sub2_nodes)
+                          if (sub2_nodes.length >0) {
+                              for (var rec_2 in sub2_nodes) {  //--level 2
+                                  node=sub2_nodes[rec_2]
+                                  if  (nodes_1[rec_sub]["children"]==undefined) {nodes_1[rec_sub]["children"]=[]}
+                                  nodes_1[rec_sub]["children"].push({id:node.attributes.id,text:node.attributes.name})
+                              }
+                          }
+                     }
+                 }
+             }
+             return out;
+         } //$("#hh-"+index+"-dop_param").on("focus",App.collections.dop_params.show(index+"-dop_param"))
