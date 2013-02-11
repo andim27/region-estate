@@ -1,5 +1,5 @@
 class InfoSource < ActiveRecord::Base
- belongs_to  :Contact
+ has_many  :contact
  has_many  :have
 
  scope :from_people, lambda {where("info_type=1")}
