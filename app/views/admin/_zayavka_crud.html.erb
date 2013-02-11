@@ -27,6 +27,17 @@
             'authenticity_token':encodeURIComponent('<%= u form_authenticity_token %>')
         }
     };
+    App.checktel=function(tel_1,tel_2){
+        $.post(App.protocol+App.baseUrl+"contacts/checktel/",
+                {tel_1:tel_1,tel_2:tel_2,type:"local"},//--type: local, inet,all
+                function(data) {
+                    alert(data);
+                    if (App.action != undefined) {
+
+                    }
+                }
+        )
+    },
     App.trim=function(string) {
         return string.replace(/(^\s+)|(\s+$)/g, "");
     };
@@ -136,7 +147,7 @@
                     attr_arr=$("*[id^='hh-"+i+"']:not(disabled)");
                     for (var j=0; j<attr_arr.length;j++){
                        param = _.last(attr_arr[j].id.split("-"));
-                       console.log("PICK HAVE param="+param)
+                       //console.log("PICK HAVE param="+param)
                         if ((param =="dop_param_1")||(param =="dop_param_2")){
                             rec[param]=$("#hh-"+i+"-"+param).combotree('getValues').join();
                         } else {
@@ -324,7 +335,7 @@
          return options_arr;
      };
      Backbone.Collection.prototype.fillHtmlSelect=function(dom_id,val_field) {
-         console.log("fillHtmlSelect dom_id="+dom_id);
+        // console.log("fillHtmlSelect dom_id="+dom_id);
          var value_str="";
          var out_str="<option value=0>Select item...</option>";
          for (var i in this.models) {
@@ -528,7 +539,7 @@
                 {
                     id:    {type:'Number',editorAttrs:{disabled:"disabled"},template:'field'},
                     name:  {type:'Text',editorAttrs:{disabled:"disabled"},template:'field',validators: ['required']},
-                    tel_1: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
+                    tel_1: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field_tel'},
                     tel_2: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
                     created_at: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
                     updated_at: {type:'Text',editorAttrs:{disabled:"disabled"},template:'field'},
@@ -547,7 +558,7 @@
                 {
                     id:    {type:'Number',template:'field'},
                     name:  {type:'Text',template:'field',validators: ['required']},
-                    tel_1: {type:'Text',template:'field'},
+                    tel_1: {type:'Text',template:'field_tel'},
                     tel_2: {type:'Text',template:'field'},
                     created_at: {type:'Text',template:'field'},
                     updated_at: {type:'Text',template:'field'},
@@ -644,6 +655,12 @@
               <div>{{editor}}</div> <div>{{help}}</div>\
             </div>\
           ',
+         field_tel: '\
+            <div style="float:left;margin: 5px;display:inline"  >\
+              <label for="{{id}}">{{title}}</label>\
+              <div>{{editor}}<img style="float:right;display:inline;margin-left:5px" id="z-tel_check" title="check tel..." src="/assets/myicons/tel.png" width=24 height=24 ></div> <div></div>\
+            </div>\
+          ',
          field_map: '\
             <div style="float:left;margin: 5px;"  >\
               <label for="{{id}}">{{title}}</label>\
@@ -701,6 +718,7 @@
         initZayavkaEvents:function(){
 //            $.parser.parse("#id_zayavka");
             $("#z-created_at,#z-updated_at").attr({"disabled":"disabled","placeholder":"today"})
+            $("#z-tel_check").click(function(){App.checktel($('#z-tel_1').val(),$('#z-tel_2').val()) })
             if (App.action=="new"){
                 $("#zayavka_save").click(function(){App.models.zayavka.zayavkaSave();});
                 $("#z-id").attr({"disabled":"disabled","placeholder":0})
@@ -761,13 +779,13 @@
                     //---dop_param_1 ,2
                     if ((value != null)){
                         if (field =="dop_param_1") { //----value format string: 1,2,3,4,5
-                            console.log("bindHavesFormAttributes field="+field)
-                            console.log("val="+value)
+                            //console.log("bindHavesFormAttributes field="+field)
+                            //console.log("val="+value)
                             $("#hh-"+i+"-dop_param_1").combotree('setValues', value.split(",").map(Number));
                         }
                         if (field =="dop_param_2") { //----value format string: 1,2,3,4,5
-                            console.log("bindHavesFormAttributes field="+field)
-                            console.log("val="+value)
+                            //console.log("bindHavesFormAttributes field="+field)
+                            //console.log("val="+value)
                             $("#hh-"+i+"-dop_param_2").combotree('setValues', value.split(",").map(Number));
                         }
                     }
@@ -879,14 +897,14 @@
             var dp_par_arr_2=App.collections.dop_params.getSelectTree(2);
             $("#hh-"+index+"-dop_param_1").combotree({data:dp_par_arr_1,lines:true,multiple:true,separator:', ',cascadeCheck:false,
                 onChange:function(newValue, oldValue){
-                    console.log("DOP_PARAM 1 CHANGE "+newValue)
+                    //console.log("DOP_PARAM 1 CHANGE "+newValue)
                     model_cur.attributes["dop_param_1"] = String(newValue);
                 }
             });
             //App.collections.dop_params.collapseAll(index,1);
             $("#hh-"+index+"-dop_param_2").combotree({data:dp_par_arr_2,lines:true,multiple:true,separator:', ',cascadeCheck:false,
                 onChange:function(newValue, oldValue){
-                    console.log("DOP_PARAM 2 CHANGE "+newValue)
+                    //console.log("DOP_PARAM 2 CHANGE "+newValue)
                     model_cur.attributes["dop_param_2"] = String(newValue);
                 }
             });
@@ -974,7 +992,7 @@
             $("#hh-"+index+"-obj_id").on("change",function(e){
                 var tab = $('#tbs-haves').tabs('getSelected');
                 var new_title=this.options[this.selectedIndex].text;
-                console.log(new_title);
+                //console.log(new_title);
                 $("#tbs-haves").find(".tabs-selected .tabs-inner .tabs-title").html(new_title)
 
             });
@@ -983,14 +1001,14 @@
             var dp_par_arr_2=App.collections.dop_params.getSelectTree(2);
             $("#hh-"+index+"-dop_param_1").combotree({data:dp_par_arr_1,lines:true,multiple:true,separator:', ',cascadeCheck:false,
                 onChange:function(newValue, oldValue){
-                    console.log("DOP_PARAM 1 CHANGE "+newValue)
+                    //console.log("DOP_PARAM 1 CHANGE "+newValue)
                     model_cur.attributes["dop_param_1"] = String(newValue);
                 }
             });
             //App.collections.dop_params.collapseAll(index,1);
             $("#hh-"+index+"-dop_param_2").combotree({data:dp_par_arr_2,lines:true,multiple:true,separator:', ',cascadeCheck:false,
                 onChange:function(newValue, oldValue){
-                    console.log("DOP_PARAM 2 CHANGE "+newValue)
+                    //console.log("DOP_PARAM 2 CHANGE "+newValue)
                     model_cur.attributes["dop_param_2"] = String(newValue);
                 }
             });
@@ -1445,7 +1463,7 @@
         },
     <% end %>
         fillWishSelectField:function (field,index,wi) {
-            console.log("Fill select wish field "+field);
+            //console.log("Fill select wish field "+field);
             var dom_id ="wi-"+wi+"-tb-"+index+"-wishlist-"+field;
             if (field == "rayon_id") {
                 App.collections.rayons.fillHtmlSelect(dom_id);
