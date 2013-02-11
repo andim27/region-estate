@@ -80,4 +80,22 @@ class ContactsController < ApplicationController
       format.json { head :no_content }
     end
   end
+
+  #-----Check tel
+  def checktel
+
+    cond_obj=Hash.new
+    if params[:type] =="local"
+      if not params[:tel_1].blank?
+      where_str="(tel_mob_1 LIKE '%:tel_1%') OR (tel_mob_2 LIKE '%:tel_1%') OR (tel_mob_3 LIKE '%:tel_1%')"
+      cond_obj={:tel_1=>params[:tel_1]}
+      if not params[:tel_2].blank?
+        where_str << " OR (tel_mob_1 LIKE '%:tel_2%') OR (tel_mob_2 LIKE '%:tel_2%') OR (tel_mob_3 LIKE '%:tel_2%')"
+        cond_obj={:tel_1 => params[:tel_1].to_i, :tel_2 => params[:tel_2].to_i}
+      end
+      res=Contact.select("id").where(where_str,cond_obj)
+     end
+    end
+    render :text=>"tel"+res.inspect
+  end
 end
