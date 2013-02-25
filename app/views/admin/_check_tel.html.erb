@@ -1,0 +1,45 @@
+<script type="text/javascript">
+    $(function() {
+        ajaxBeforSend= function(xhr) {
+            xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'))
+        };
+        $("#check_btn").click(function(){
+            var type='local'
+            if ($("#inet").attr("checked")=='checket') {
+                type="inet"
+            }
+            $.ajax({
+                        beforeSend:ajaxBeforSend,
+                        type:"post",
+                        dataType:"json",
+                        url:"http://<%= request.env["HTTP_HOST"]; %>"+"/contacts/checktel/",
+                        data:{type:type,tel_1:$("#tel").val()}
+                    }
+            ).done(
+                    function(res) {alert(res);
+                        var contacts=res.contact
+                        var info=res.info
+                        var out_html=""
+                        for (var rec in contacts) {
+                            out_html+="<p> <img width='20px' height='20px' src='/assets/myicons/"+contacts[rec].img+"' />"+contacts[rec].info_type_name+": <b>"+contacts[rec].info_source_name+":</b>  "+contacts[rec].name+"</p>"
+                        }
+                        out_html=out_html+"<hr>"
+                        for (var rec in info) {
+                            out_html+="<p>id:"+info[rec].id+": "+info[rec].name+"</p>"
+                        }
+                        $("#check_res").html(out_html)
+                    }
+            )
+
+        });
+    });
+</script>
+<p>
+<label for="tel">Tel:</label><input id="tel" type="text" size=40/><button id="check_btn" value="Check">Check</button>
+</p>
+<p>
+  <input type="radio" id="bd" name="type">Local BD  <input type="radio" id="inet"name="type" style="margin-left: 10px;">Inet
+</p>
+<div id="check_res">
+
+</div>
