@@ -84,14 +84,22 @@ class ExtCodesController < ApplicationController
   # ---get ext codes for grid view
   def get_ext_codes
     name_table=params[:name_table]
-
+    res=Hash.new
     if name_table == "rayons"
-       items=Rayon.select("rayons.id as id_table,rayons.name,(SELECT code FROM ext_codes WHERE ext_codes.id_info_source=#{params[:id_info_source]} and ext_codes.id_table=rayons.id) as code").from("rayons,ext_codes").where("rayons.parent=2775")
+       items=Rayon.select("rayons.id as id_table,rayons.name,(SELECT code FROM ext_codes WHERE ext_codes.id_info_source=#{params[:id_info_source]} and ext_codes.id_table=rayons.id) as code").from("rayons,ext_codes").where("rayons.parent=2775").page(params[:page]).per(params[:rows])
+       res[:total]=Rayon.where("rayons.parent=2775").count
     end
     if name_table =="objs"
-      items=Obj.select("DISTINCT objs.id as id_table,objs.name,(SELECT code FROM ext_codes WHERE ext_codes.id_info_source=#{params[:id_info_source]} and ext_codes.id_table=objs.id) as code").from("objs,ext_codes")
+       items=Obj.select("DISTINCT objs.id as id_table,objs.name,(SELECT code FROM ext_codes WHERE ext_codes.id_info_source=#{params[:id_info_source]} and ext_codes.id_table=objs.id) as code").from("objs,ext_codes")
+       res[:total]=Obj.count
     end
-    render :json=>items.to_json
+    if name_table =="states"
+      items=State.select("id as id_table,name").all
+      res[:total]=State.count
+    end
+
+    res[:rows]=items
+    render :json=>res.to_json
   rescue Exception => e
     render :text=>"Error:"+e.backtrace
   end
