@@ -1,0 +1,484 @@
+
+<% content_for :title do %>
+    Parser
+<% end %>
+
+<div data-options="region:'north',border:false,collapsible:true" style="height:60px;background:#fcf8e3;padding:10px">Parser stats:</div>
+<!--Control resource panel WEST-->
+<div data-options="region:'west',split:true,title:'Parsed resource'" style="width:780px;padding:10px;">
+  <table id="dg" title="Urls" style="width:720px;height:410px"
+         data-options="singleSelect:false,selectOnCheck:false"
+         toolbar="#toolbar"  rownumbers="true" pagination="true"
+         fitColumns="true" singleSelect="true">
+    <thead>
+    <tr>
+      <th data-options="field:'ck',checkbox:true"></th>
+      <th field="name" width="50">Name</th>
+      <th field="info_url" width="50">Url</th>
+      <th field="parsed_at" width="50">Parsed at</th>
+      <th field="Progres" width="10">Progres</th>
+      <th field="Time" width="50">Time</th>
+    </tr>
+    </thead>
+  </table>
+  <div id="toolbar"  style="padding:5px;height:auto">
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-reload" plain="true" onclick="reloadItems()">Reload</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" plain="true">Set</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" plain="true" id="parse_btn">Parse</a>
+    <div>
+      Who:
+      <select class="easyui-combobox" panelHeight="auto" style="width:100px">
+        <option value="0">Все</option>
+        <option value="1">Без посредников</option>
+      </select>
+      Type info:
+      <select class="easyui-combobox" panelHeight="auto" style="width:100px">
+        <option value="0">All</option>
+        <option value="1">Хозяева</option>
+        <option value="2">Агентства</option>
+        <option value="3">Доски обьявление</option>
+    </select>
+      <!--Date From: <input class="easyui-datebox" style="width:80px">-->
+      <!--To: <input class="easyui-datebox" style="width:80px">-->
+
+      Objects:
+      <select class="easyui-combobox" panelHeight="auto" style="width:80px">
+        <option value="0">All</option>
+        <% @objs.each do |item| %>
+            <option value="<%=item.id %>"><%=item.name %></option>
+        <% end %>
+      </select>
+      <div id="room_param" style="display:inline;width:80px">
+        Room:<input id="p_room" class="easyui-numberspinner" style="width:50px;" required="required" data-options="min:1,max:7,editable:false">
+      </div>
+      <div id="rayon_param" style="display:inline;width:200px">
+        Rayons:
+        <select class="easyui-combobox" panelHeight="auto" style="width:160px">
+             <option value="0">All</option>
+          <% @rayons.each do |item| %>
+              <option value="<%=item.id %>"><%=item.name %></option>
+          <% end %>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!--Control resource panel EAST-->
+<div data-options="region:'east',split:true,collapsed:true,title:'Log'" style="width:100px;padding:10px;">Log region</div>
+
+<!--Control resource panel CENTER-->
+<div data-options="region:'center',split:true,title:'Parsed propety'">
+  <div id="tt" class="easyui-tabs" data-options="tools:'#tab-tools'" style="width:450px;height:450px">
+
+    <div title="Rules" style="padding:10px"> <!-- tab item RULES-->
+      <br>
+      <label for="operation">Operation</label>
+      <select id="operation">
+        <option value=0>Sell</option> <option value=1>Buy</option> <option value=2>Obmen</option>
+        <option value=3>Rent</option> <option value=4>Tenant</option>
+      </select>
+      <label for="kind">Kind</label>
+      <select id="kind">
+        <option value=0 selected>List</option> <option value=1>Detail</option> <option value=1>Text</option>
+      </select>
+      <table  style="vertical-align: top">
+
+        <tr>
+          <th width="30%">Fields</th>
+          <th>Rules</th>
+        </tr>
+        <tr>
+          <td width="30%">
+            <select id="p_fields" size=20 style="width:100%">
+              <% @havefields.each do |item| %>
+                  <option value="<%=item.id %>"><%=item.name %></option>
+              <% end %>
+            </select>
+          </td>
+          <td>
+             <textarea id="p_rules" cols="20" rows="8"></textarea>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div title="Auth" style="padding:10px"> <!-- tab item AUTH-->
+      <label for="p_login">Login param:?</label><input id="p_auth_login" type="text" style="width:100%" />
+      <label for="p_get">Password param:?</label><input id="p_auth_psw" type="text" style="width:100%" />
+    </div>
+    <div title="Ext-Code" style="padding:10px"> <!-- tab item Ext-Code-->
+          <label for="table">Field</label>
+          <select id="table">
+            <option value="rayons" selected>Rayon</option> <option value="objs">Object</option> <option value="states">State</option>
+          </select>
+          <br>
+      <!--grid-->
+          <table id="dg_codes" title="Ext-codes" style="width:400px;height:350px"
+                 toolbar="#toolbar_codes" pagination="false" idField="id"
+                 rownumbers="true" fitColumns="true" singleSelect="true">
+            <thead>
+            <tr>
+              <th field="id_table" width="30">Id_table</th>
+              <th field="name" width="50">Name</th>
+              <th field="code" width="50" editor="text">Code</th>
+            </tr>
+            </thead>
+          </table>
+          <div id="toolbar_codes">
+            <!--<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="javascript: App.collections.extCodes.saveCode()">Save</a>-->
+            <!--<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-undo" plain="true" onclick="javascript:$('#dg_codes').datagrid('cancelEdit',lastIndex)">Cancel</a>-->
+          </div>
+    </div>
+    </div>
+  <div id="tab-tools">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-save'" onclick="saveTabProp()"></a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="reloadTabProp()"></a>
+  </div>
+
+</div>
+<!--CProcess resource panel SOUTH-->
+<div data-options="region:'south',border:true,split:true" style="height:240px;background:#fcf8e3;padding:10px;">  <!-- B3DFDA-->
+  <p>
+    <span>Ulr:</span><input id="p__source_url" type="text" style="width:80%"   />
+    <a href="#" id="p_content_btn" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'"></a>
+    <!--<a href="#" id="p_url_save_btn" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-save'"></a>-->
+    <a href="#" id="iframe_url_btn" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-undo'" title="get url"></a>
+    <a href="#" id="iframe_inc_btn" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-down'"></a>
+    <a href="#" id="iframe_dec_btn" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-up'"></a><br>
+    <span>Content:</span>
+  <iframe id="p_source" src="" width="100%" heigth="350px"></iframe>
+  <br><br>
+  </p>
+</div>
+
+<!------------------------------------------------------SCRIPTS----------------------------------------------------------->
+<script type="text/javascript">
+  App={
+      models:{},collections:{},
+      baseUrl:"<%= request.env["HTTP_HOST"]; %>/",
+      extCodesUrl:"http://<%=request.env["HTTP_HOST"] %>"
+  }
+  var lastIndex;
+  App.cur_id=0;  App.cur_prop={};
+  function initEvents(){
+      $("#parse_btn").click(function(){
+          $.post('http://'+App.baseUrl+'info_parser_rules/parse_resource/',{id_info_source:App.cur_id}, function(data) {
+              console.log(data)
+          })
+      })
+      $("#p_content_btn").click(function(){
+          //alert($("#p_url").val())
+          $("#p_source").attr("src",$("#p_url").val())
+      })
+      $("#p_url_save_btn").click(function(){
+          saveProp([{prop_name:"p_url_save_btn"}])
+      })
+      $("#iframe_url_btn").click(function(){//--get url from iframe--
+          $("#p_url").val(document.getElementById('p_source').contentWindow.location);
+      })
+
+      $("#iframe_inc_btn").click(function(){
+          $("#p_source").height( $("#p_source").height()+20)
+      })
+      $("#iframe_dec_btn").click(function(){
+          $("#p_source").height( $("#p_source").height()-20)
+      })
+      $("#p_fields").on("change", function(){App.collections.parserRules.bindRules($("#p_fields :selected").text())})
+      $("#operation,#kind").on("change",function(){
+          App.collections.parserRules.getRules()
+      })
+      $("#table").on("change",function(){
+          App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+      })
+  }//---initEvents---
+  function saveTabProp(){
+      var tab = $('#tt').tabs('getSelected');
+      var index = $('#tt').tabs('getTabIndex',tab);
+      var p_prop={id:App.cur_id}
+      if (index==0) {//--Rules
+          console.log( $("#have_fields :selected").val())
+          App.collections.parserRules.saveFieldRules()
+      }
+      if (index==1) {//--Auth
+          p_prop={id:App.cur_id,p_auth_login: $("#p_auth_login").val(),p_auth_psw: $("#p_auth_psw").val()}
+          saveProp(p_prop)
+      }
+      if (index==2) {//--Ext-Codes
+          App.collections.extCodes.saveCode()
+      }
+
+
+  }//---e:saveProp---
+  function bindPropFields(prop) {
+     console.log("Bind:",prop)
+     $("#p__source_url").val(""+prop.p_url)
+     for (p in prop) {
+
+         var prop_name=p.indexOf("p_")
+         if (prop_name==0) {
+             //console.log("p=",p,"prop[p]=",prop[p])
+             $("#"+ p.trim()).val(prop[p])
+         }
+     }
+  }
+  function saveProp(p_pr){
+      console.log(p_pr)
+      var action_type="put"
+      var action_name="update"
+      $.ajax( {
+        url:"http://<%=request.env["HTTP_HOST"] %>/info_sources/"+App.cur_id,
+        type:action_type,
+        data:p_pr
+      }).done(function(data) {
+               alert("Added..."+data);
+      });
+  }//---e:saveProp---
+  function CreateHTTPRequestObject () {
+      // although IE supports the XMLHttpRequest object, but it does not work on local files.
+      var forceActiveX = (window.ActiveXObject && location.protocol === "file:");
+      if (window.XMLHttpRequest && !forceActiveX) {
+          return new XMLHttpRequest();
+      }
+      else {
+          try {
+              return new ActiveXObject("Microsoft.XMLHTTP");
+          } catch(e) {}
+      }
+      alert ("Your browser doesn't support XML handling!");
+      return null;
+  }
+  ajaxBeforSend= function() {
+      httpRequest = CreateHTTPRequestObject ();
+      httpRequest.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'))
+      //httpRequest.send(null);
+  }//--e.beforsend---
+
+  //---grid--------------------------
+
+  //---grid--------------------------
+
+  //----MODELS-----------
+  ExtCode = Backbone.Model.extend({
+      url:App.extCodesUrl+"/ext_codes/save_code/"
+  })
+  ParseProp = Backbone.Model.extend({
+
+  })
+  ParseRule = Backbone.Model.extend({
+    urlRoot:"http://<%=request.env["HTTP_HOST"] %>/info_parser_rules/",
+    defaults: {
+        //have_fields:[{id_info_source:0, p_field: "",p_rules: ""}]
+
+    },
+    initialize: function(){
+       //console.log("ParseRule is the answer");
+    }
+  });
+  //----b:COLLECTIONS------
+  ExtCodes = Backbone.Collection.extend({
+      url:App.extCodesUrl+"/ext_codes/get_ext_codes/",
+      model:ExtCode,
+      fillGrid:function(res){
+          //console.log("fillGrid ",res)
+          $('#dg_codes').datagrid({data:res})
+      },
+      saveCode:function() {
+          $('#dg_codes').datagrid('acceptChanges');
+          var id_table = $('#dg_codes').datagrid('getSelected').id_table
+          var code     = $('#dg_codes').datagrid('getSelected').code
+          console.log("saveCode ",id_table )
+          var cur_model=this.where({id_table:id_table})[0]
+          cur_model.set({name_table:$("#table").val(),id_info_source: App.cur_id,code:code})
+          console.log("cur_model =",cur_model)
+          cur_model.save({success:function(res){alert(res)}})
+      },
+      updateCode:function() {
+          $('#dg_codes').datagrid('acceptChanges');
+          console.log("updateCode ")
+      }
+
+  });
+  ParseRules = Backbone.Collection.extend({
+    model:ParseRule,
+    getRules:function(){
+        $.post(
+           "http://"+App.baseUrl+"/info_parser_rules/get_parsed_rules/",
+           {id_info_source:App.cur_id,operation:$("#operation").val(),kind:$("#kind").val()}
+        ).success(function(res){App.collections.parserRules.setRules(res);})
+    },
+    setRules:function(data_arr){
+        console.log("getRules ",data_arr);
+        if (data_arr.length==0){
+             for (m in this.models) {
+                 this.models[m].set({p_rules:"Text rule"})
+                 delete this.models[m].attributes.id
+             }
+        } else {
+            for (rec in data_arr){
+                var p_field_name=data_arr[rec].p_field
+                var cur_model=this.where({p_field:p_field_name})
+                if (cur_model.length >=1){
+                    cur_model[0].set({id:data_arr[rec].id,p_rules:data_arr[rec].p_rules})
+                }
+            }
+        }
+    },
+    bindRules:function(field_name){
+          var cur_model=this.where({p_field:field_name})
+          cur_model[0].set({id_info_source:App.cur_id})
+          $("#p_rules").val(cur_model[0].get("p_rules"))
+     },
+     saveFieldRules:function(){
+         var p_field_name=$("#p_fields :selected").text();
+         var cur_model=this.where({p_field:p_field_name})
+         cur_model[0].set({id_info_source:App.cur_id,p_field:p_field_name,p_rules:$("#p_rules").val(),operation:$("#operation").val(),kind:$("#kind").val()})
+         cur_model[0].save().success(function(e){console.log("saveFieldRules ",e)})
+     }
+  });
+  //----e:COLLECTION-------
+  //----b:initMODELS--
+  App.have_fields=[]
+  App.models.parserRule=new ParseRule()
+  App.models.parseProp =new ParseProp()
+
+
+  App.collections.parserRules=new ParseRules([
+       <% @havefields.each_with_index do |item,pos| %>
+         new ParseRule( {p_field:"<%= item.name  %>",p_rules:"rule text"})<%= (pos != (@havefields.size-1))?:",":"" %>
+       <% end %>
+  ])
+  App.collections.extCodes=new ExtCodes()
+
+  //----e:initCOLLECTIONS--
+    $(function(){
+        initEvents();
+        $('#tt').tabs({
+            onSelect: function(title,index){
+                if (index==2){//----ext codes---
+                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+                }
+
+            }
+        });
+        $('#dg_codes').datagrid({
+           onClickRow:function(rowIndex){
+            if (lastIndex != rowIndex){
+                $('#dg_codes').datagrid('endEdit', lastIndex);
+                $('#dg_codes').datagrid('beginEdit', rowIndex);
+            }
+            lastIndex = rowIndex;
+           }
+       });
+
+        App.collections.extCodes.fetch({type:"post",data:{table:$("#table").val()}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+        $('#dg').datagrid({
+            view: detailview,
+            url:"http://<%=request.env["HTTP_HOST"] %>/info_sources/get_parsed_list/",
+            queryParams: {
+                //'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+                'X-CSRF-Token': '<%= form_authenticity_token.to_s %>'
+            },
+            detailFormatter:function(index,row){
+                return '<div class="ddv"></div>';
+            },
+            resize:function() {
+                console.info("resize...")
+            },
+            //onBeforeLoad:function() {ajaxBeforSend()},
+            onSelect:function(rowIndex, rowData){
+               console.info(rowIndex, rowData.info_url)
+
+               App.cur_id=rowData.id
+               App.cur_prop=rowData;//$('#dg').datagrid('getSelected')
+               //$("#p_url").val(rowData.info_url)
+               App.collections.parserRules.getRules()
+
+                var tab = $('#tt').tabs('getSelected');
+                var tab_index = $('#tt').tabs('getTabIndex',tab);
+                if (tab_index==2){//--ext-codes---
+                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+                }
+
+
+               bindPropFields(App.cur_prop);
+            },
+            onExpandRow: function(index,row){
+                var ddv = $(this).datagrid('getRowDetail',index).find('div.ddv');
+                ddv.panel({
+                    border:false,
+                    cache:true,
+                    href:'show_form.php?index='+index,
+                    onLoad:function(){
+                        $('#dg').datagrid('fixDetailRowHeight',index);
+                        $('#dg').datagrid('selectRow',index);
+                        $('#dg').datagrid('getRowDetail',index).find('form').form('load',row);
+                    }
+                });
+                $('#dg').datagrid('fixDetailRowHeight',index);
+            }
+        });
+    });
+    function saveItem(index){
+        var row = $('#dg').datagrid('getRows')[index];
+        var url = row.isNewRecord ? 'save_user.php' : 'update_user.php?id='+row.id;
+        $('#dg').datagrid('getRowDetail',index).find('form').form('submit',{
+            url: url,
+            onSubmit: function(){
+                return $(this).form('validate');
+            },
+            success: function(data){
+                data = eval('('+data+')');
+                data.isNewRecord = false;
+                $('#dg').datagrid('collapseRow',index);
+                $('#dg').datagrid('updateRow',{
+                    index: index,
+                    row: data
+                });
+            }
+        });
+    }
+    function cancelItem(index){
+        var row = $('#dg').datagrid('getRows')[index];
+        if (row.isNewRecord){
+            $('#dg').datagrid('deleteRow',index);
+        } else {
+            $('#dg').datagrid('collapseRow',index);
+        }
+    }
+    function destroyItem(){
+        var row = $('#dg').datagrid('getSelected');
+        if (row){
+            $.messager.confirm('Confirm','Are you sure you want to remove this user?',function(r){
+                if (r){
+                    var index = $('#dg').datagrid('getRowIndex',row);
+                    $.post('destroy_user.php',{id:row.id},function(){
+                        $('#dg').datagrid('deleteRow',index);
+                    });
+                }
+            });
+        }
+    }
+    function newItem(){
+      $('#dg').datagrid('appendRow',{isNewRecord:true});
+      var index = $('#dg').datagrid('getRows').length - 1;
+      $('#dg').datagrid('expandRow', index);
+      $('#dg').datagrid('selectRow', index);
+  }
+  function reloadItems(){
+      $('#dg').datagrid('reload');
+  }
+</script>
+<style type="text/css">
+    form{
+        margin:0;
+        padding:0;
+    }
+    .dv-table td{
+        border:0;
+    }
+    .dv-table input{
+        border:1px solid #ccc;
+    }
+</style>
