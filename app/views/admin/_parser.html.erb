@@ -110,13 +110,26 @@
     </div>
     <div title="Ext-Code" style="padding:10px"> <!-- tab item Ext-Code-->
           <label for="table">Field</label>
-          <select id="table">
-            <option value="rayons" selected>Rayon</option> <option value="objs">Object</option> <option value="states">State</option>
-          </select>
-          <br>
+          <input id="table"  class="easyui-combobox" panelHeight="auto"  data-options="
+            valueField: 'value',
+            textField: 'label',
+            data: [{
+                    label: 'Rayons',
+                    value: 'rayons',
+                    selected:true
+                },{
+                    label: 'Objects',
+                    value: 'objs'
+                },{
+                    label: 'States',
+                    value: 'states'
+                }]" />
+            <!--<option value="rayons" selected>Rayon</option> <option value="objs">Object</option> <option value="states">State</option>-->
+          <!--</select>-->
+          <br><br>
       <!--grid-->
           <table id="dg_codes" title="Ext-codes" style="width:400px;height:350px"
-                 toolbar="#toolbar_codes" pagination="false" idField="id"
+                 toolbar="#toolbar_codes" pagination="true" idField="id"
                  rownumbers="true" fitColumns="true" singleSelect="true">
             <thead>
             <tr>
@@ -160,6 +173,16 @@
       baseUrl:"<%= request.env["HTTP_HOST"]; %>/",
       extCodesUrl:"http://<%=request.env["HTTP_HOST"] %>"
   }
+  App.refreshCodes=function(){
+      $('#dg_codes').datagrid({
+          queryParams: {
+              type:"post",
+              name_table:$("#table").combobox("getValue"),//----$("#table").val(),
+              id_info_source:App.cur_id
+          }
+      });
+      $('#dg_codes').datagrid("reload")
+  }
   var lastIndex;
   App.cur_id=0;  App.cur_prop={};
   function initEvents(){
@@ -189,9 +212,14 @@
       $("#operation,#kind").on("change",function(){
           App.collections.parserRules.getRules()
       })
-      $("#table").on("change",function(){
-          App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
-      })
+      $("#table").combobox({onSelect:function(rec){
+          App.refreshCodes();
+      }})
+//      $("#table").on("change",function(){
+//          App.refreshCodes();
+//          //App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+//      })
+
   }//---initEvents---
   function saveTabProp(){
       var tab = $('#tt').tabs('getSelected');
@@ -255,9 +283,6 @@
       //httpRequest.send(null);
   }//--e.beforsend---
 
-  //---grid--------------------------
-
-  //---grid--------------------------
 
   //----MODELS-----------
   ExtCode = Backbone.Model.extend({
@@ -282,7 +307,7 @@
       model:ExtCode,
       fillGrid:function(res){
           //console.log("fillGrid ",res)
-          $('#dg_codes').datagrid({data:res})
+          $('#dg_codes').datagrid({data:res.rows})
       },
       saveCode:function() {
           $('#dg_codes').datagrid('acceptChanges');
@@ -290,7 +315,7 @@
           var code     = $('#dg_codes').datagrid('getSelected').code
           console.log("saveCode ",id_table )
           var cur_model=this.where({id_table:id_table})[0]
-          cur_model.set({name_table:$("#table").val(),id_info_source: App.cur_id,code:code})
+          cur_model.set({name_table:$("#table").combobox("getValue"),id_info_source: App.cur_id,code:code})
           console.log("cur_model =",cur_model)
           cur_model.save({success:function(res){alert(res)}})
       },
@@ -353,16 +378,42 @@
 
   //----e:initCOLLECTIONS--
     $(function(){
-        initEvents();
+
         $('#tt').tabs({
             onSelect: function(title,index){
+                console.log("tab select index=",index)
                 if (index==2){//----ext codes---
-                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+                    //----pagination-------------
+                   // if (pager != undefined) {
+                            pg=$('#dg_codes').datagrid('getPager')
+//                            console.log("pager=",pg)
+//                            pg.pagination({
+//                                onSelectPage: function(pageNumber, pageSize){
+//                                    alert(pageNumber)
+//                                    $(this).pagination('loading');
+//                                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id,page:pageNumber,rows:pageSize}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+//                                    $(this).pagination('loaded');
+//                                }
+//                            })
+                   // }
+                   // App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
                 }
 
             }
         });
+        //-----grid codes---------------
         $('#dg_codes').datagrid({
+           url:App.extCodesUrl+"/ext_codes/get_ext_codes/",
+           queryParams: {
+               type:"post",
+               name_table:$("#table").combobox("getValue"),
+               id_info_source:App.cur_id
+
+           },
+           onLoadSuccess:function(data){
+              console.log("onLoadSuccess=",data)
+               App.collections.extCodes.reset(data.rows)
+           },
            onClickRow:function(rowIndex){
             if (lastIndex != rowIndex){
                 $('#dg_codes').datagrid('endEdit', lastIndex);
@@ -372,7 +423,7 @@
            }
        });
 
-        App.collections.extCodes.fetch({type:"post",data:{table:$("#table").val()}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+        //App.collections.extCodes.fetch({type:"post",data:{table:$("#table").val()}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
         $('#dg').datagrid({
             view: detailview,
             url:"http://<%=request.env["HTTP_HOST"] %>/info_sources/get_parsed_list/",
@@ -398,7 +449,8 @@
                 var tab = $('#tt').tabs('getSelected');
                 var tab_index = $('#tt').tabs('getTabIndex',tab);
                 if (tab_index==2){//--ext-codes---
-                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+                    App.refreshCodes();
+                    //App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
                 }
 
 
@@ -419,6 +471,7 @@
                 $('#dg').datagrid('fixDetailRowHeight',index);
             }
         });
+        initEvents();
     });
     function saveItem(index){
         var row = $('#dg').datagrid('getRows')[index];
