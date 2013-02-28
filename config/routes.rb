@@ -1,4 +1,7 @@
 Estate::Application.routes.draw do
+  resources :ext_codes
+
+
   resources :dop_params
 
   resources :have_fields
@@ -19,7 +22,16 @@ Estate::Application.routes.draw do
   resources :wants
   resources :wish_lists
   resources :HaveFields
+  resources :info_parser_rules
+  resources :ext_codes
 
+  match 'info_sources/get_parsed_list',:via => :post
+  match 'info_parser_rules/get_parsed_rules',:via => :post
+  match 'info_parser_rules/parse_resource',:via => :post
+  match 'ext_codes/get_ext_codes',:via => :post
+  match 'ext_codes/save_code',:via => :post
+
+  match 'contacts/checktel/',:via => :post
   match 'haves/planirovki/:id' => 'haves#planirovki', :via=>[:get] ##:constraints => {:id => /^\d/}
 
   #map.connect 'static/:path', :controller => 'static', :action => 'show'
