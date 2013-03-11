@@ -67,7 +67,10 @@
 </div>
 
 <!--Control resource panel EAST-->
-<div data-options="region:'east',split:true,collapsed:true,title:'Log'" style="width:100px;padding:10px;">Log region</div>
+<div data-options="region:'east',split:true,collapsed:true,title:'Log'" style="width:100px;padding:10px;">
+  Log region
+  <table id="dg_rules"></table>
+</div>
 
 <!--Control resource panel CENTER-->
 <div data-options="region:'center',split:true,title:'Parsed propety'">
@@ -211,6 +214,12 @@
       $("#p_fields").on("change", function(){App.collections.parserRules.bindRules($("#p_fields :selected").text())})
       $("#operation,#kind").on("change",function(){
           App.collections.parserRules.getRules()
+          $('#dg_rules').datagrid('load', {
+              type:"post",
+              operation:$("#operation").val(),
+              kind:$("#kind").val(),
+              id_info_source:App.cur_id
+          });
       })
       $("#table").combobox({onSelect:function(rec){
           App.refreshCodes();
@@ -385,7 +394,7 @@
                 if (index==2){//----ext codes---
                     //----pagination-------------
                    // if (pager != undefined) {
-                            pg=$('#dg_codes').datagrid('getPager')
+                           // pg=$('#dg_codes').datagrid('getPager')
 //                            console.log("pager=",pg)
 //                            pg.pagination({
 //                                onSelectPage: function(pageNumber, pageSize){
@@ -400,6 +409,24 @@
                 }
 
             }
+        });
+        //-----grid rules---------------
+        $('#dg_rules').datagrid({
+            url:App.extCodesUrl+"/info_parser_rules/get_fields_rules/",
+            width:400,
+            singleSelect:true,
+            selectOnCheck:false,
+            queryParams: {
+                type:"post",
+                operation:$("#operation").val(),
+                kind:$("#kind").val(),
+                id_info_source:App.cur_id
+
+            },
+            columns:[[
+                {field:'p_field',title:'Field',width:80},
+                {field:'p_rules',title:'Rule',width:100}
+            ]]
         });
         //-----grid codes---------------
         $('#dg_codes').datagrid({
@@ -445,7 +472,12 @@
                App.cur_prop=rowData;//$('#dg').datagrid('getSelected')
                //$("#p_url").val(rowData.info_url)
                App.collections.parserRules.getRules()
-
+               $('#dg_rules').datagrid('load', {
+                    type:"post",
+                    operation:$("#operation").val(),
+                    kind:$("#kind").val(),
+                    id_info_source:App.cur_id
+               });
                 var tab = $('#tt').tabs('getSelected');
                 var tab_index = $('#tt').tabs('getTabIndex',tab);
                 if (tab_index==2){//--ext-codes---
@@ -473,52 +505,7 @@
         });
         initEvents();
     });
-    function saveItem(index){
-        var row = $('#dg').datagrid('getRows')[index];
-        var url = row.isNewRecord ? 'save_user.php' : 'update_user.php?id='+row.id;
-        $('#dg').datagrid('getRowDetail',index).find('form').form('submit',{
-            url: url,
-            onSubmit: function(){
-                return $(this).form('validate');
-            },
-            success: function(data){
-                data = eval('('+data+')');
-                data.isNewRecord = false;
-                $('#dg').datagrid('collapseRow',index);
-                $('#dg').datagrid('updateRow',{
-                    index: index,
-                    row: data
-                });
-            }
-        });
-    }
-    function cancelItem(index){
-        var row = $('#dg').datagrid('getRows')[index];
-        if (row.isNewRecord){
-            $('#dg').datagrid('deleteRow',index);
-        } else {
-            $('#dg').datagrid('collapseRow',index);
-        }
-    }
-    function destroyItem(){
-        var row = $('#dg').datagrid('getSelected');
-        if (row){
-            $.messager.confirm('Confirm','Are you sure you want to remove this user?',function(r){
-                if (r){
-                    var index = $('#dg').datagrid('getRowIndex',row);
-                    $.post('destroy_user.php',{id:row.id},function(){
-                        $('#dg').datagrid('deleteRow',index);
-                    });
-                }
-            });
-        }
-    }
-    function newItem(){
-      $('#dg').datagrid('appendRow',{isNewRecord:true});
-      var index = $('#dg').datagrid('getRows').length - 1;
-      $('#dg').datagrid('expandRow', index);
-      $('#dg').datagrid('selectRow', index);
-  }
+
   function reloadItems(){
       $('#dg').datagrid('reload');
   }
