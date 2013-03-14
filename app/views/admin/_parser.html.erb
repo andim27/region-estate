@@ -26,34 +26,45 @@
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" plain="true">Set</a>
     <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" plain="true" id="parse_btn">Parse</a>
     <div>
+
+      Info_type:
+      <select id="info_type" class="easyui-combobox" panelHeight="auto" style="width:100px"  data-options="
+           onSelect: function(rec){    App.loadParserListGrid() } ">
+        <option value="0">All</option>
+        <option value="1">Хозяева</option>
+        <option value="2">Доски обьявление</option>
+        <option value="3">Агентства</option>
+
+        <option value="4">Файлы</option>
+      </select>
       Who:
-      <select class="easyui-combobox" panelHeight="auto" style="width:100px">
+      <select id="who" class="easyui-combobox" panelHeight="auto" style="width:100px">
         <option value="0">Все</option>
         <option value="1">Без посредников</option>
       </select>
-      Type info:
-      <select class="easyui-combobox" panelHeight="auto" style="width:100px">
-        <option value="0">All</option>
-        <option value="1">Хозяева</option>
-        <option value="2">Агентства</option>
-        <option value="3">Доски обьявление</option>
-    </select>
       <!--Date From: <input class="easyui-datebox" style="width:80px">-->
       <!--To: <input class="easyui-datebox" style="width:80px">-->
 
       Objects:
-      <select class="easyui-combobox" panelHeight="auto" style="width:80px">
+      <select id="obj" class="easyui-combobox" panelHeight="auto" style="width:80px">
         <option value="0">All</option>
         <% @objs.each do |item| %>
             <option value="<%=item.id %>"><%=item.name %></option>
         <% end %>
       </select>
       <div id="room_param" style="display:inline;width:80px">
-        Room:<input id="p_room" class="easyui-numberspinner" style="width:50px;" required="required" data-options="min:1,max:7,editable:false">
+        Room:
+        <select id="room" class="easyui-combobox" panelHeight="auto" style="width:50px">
+          <option value="0">All</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
       </div>
       <div id="rayon_param" style="display:inline;width:200px">
         Rayons:
-        <select class="easyui-combobox" panelHeight="auto" style="width:160px">
+        <select id="rayon" class="easyui-combobox" panelHeight="auto" style="width:160px">
              <option value="0">All</option>
           <% @rayons.each do |item| %>
               <option value="<%=item.id %>"><%=item.name %></option>
@@ -69,7 +80,7 @@
 <!--Control resource panel EAST-->
 <div data-options="region:'east',split:true,collapsed:true,title:'Log'" style="width:100px;padding:10px;">
   Log region
-  <table id="dg_rules"></table>
+
 </div>
 
 <!--Control resource panel CENTER-->
@@ -87,25 +98,27 @@
       <select id="kind">
         <option value=0 selected>List</option> <option value=1>Detail</option> <option value=1>Text</option>
       </select>
-      <table  style="vertical-align: top">
+      <br><br>
+      <!--<table  style="vertical-align: top">-->
 
-        <tr>
-          <th width="30%">Fields</th>
-          <th>Rules</th>
-        </tr>
-        <tr>
-          <td width="30%">
-            <select id="p_fields" size=20 style="width:100%">
-              <% @havefields.each do |item| %>
-                  <option value="<%=item.id %>"><%=item.name %></option>
-              <% end %>
-            </select>
-          </td>
-          <td>
-             <textarea id="p_rules" cols="20" rows="8"></textarea>
-          </td>
-        </tr>
-      </table>
+        <!--<tr>-->
+          <!--<th width="30%">Fields</th>-->
+          <!--<th>Rules</th>-->
+        <!--</tr>-->
+        <!--<tr>-->
+          <!--<td width="30%">-->
+            <!--<select id="p_fields" size=20 style="width:100%">-->
+              <!--<% @havefields.each do |item| %>-->
+                  <!--<option value="<%=item.id %>"><%=item.name %></option>-->
+              <!--<% end %>-->
+            <!--</select>-->
+          <!--</td>-->
+          <!--<td>-->
+             <!--<textarea id="p_rules" cols="20" rows="8"></textarea>-->
+          <!--</td>-->
+        <!--</tr>-->
+      <!--</table>-->
+      <table id="dg_rules"></table>
     </div>
     <div title="Auth" style="padding:10px"> <!-- tab item AUTH-->
       <label for="p_login">Login param:?</label><input id="p_auth_login" type="text" style="width:100%" />
@@ -176,6 +189,12 @@
       baseUrl:"<%= request.env["HTTP_HOST"]; %>/",
       extCodesUrl:"http://<%=request.env["HTTP_HOST"] %>"
   }
+  App.loadParserListGrid=function(){
+      $('#dg').datagrid({
+          queryParams: {'info_type':$('#info_type').combobox('getValue')}
+      })
+      $('#dg').datagrid('reload');
+  }
   App.refreshCodes=function(){
       $('#dg_codes').datagrid({
           queryParams: {
@@ -186,13 +205,47 @@
       });
       $('#dg_codes').datagrid("reload")
   }
-  var lastIndex;
-  App.cur_id=0;  App.cur_prop={};
+  App.saveCurRule=function(row,rule_val) {
+      App.models.parserRule.set({id:row.id_rules,id_have_field:row.id_have_field,id_info_source:App.cur_id,p_field:row.p_field,p_rules:rule_val,operation:$("#operation").val(),kind:$("#kind").val()});
+      App.models.parserRule.save().success(function(e){
+          $.messager.show({
+              title:'Save result',
+              msg:'Rule result :'+(e==null)?"Saved!":e,
+              timeout:2000,
+              showType:'slide',style:{
+                  left:'',
+                  right:0,
+                  top:document.body.scrollTop+document.documentElement.scrollTop,
+                  bottom:''
+              }
+          });
+          //console.log("saveFieldRules ",e)});
+  }
+          App.parseResourses=function(){
+              $.post('http://'+App.baseUrl+'info_parser_rules/parse_resource/',
+                      {
+                          id_info_source:App.cur_id,
+                          info_type:$('#info_type').combobox('getValue'),
+                          who      :$('#who').combobox('getValue'),
+                          obj      :$('#obj').combobox('getValue'),
+                          room     :$('#room').combobox('getValue'),
+                          rayon    :$('#rayon').combobox('getValue')
+                      },
+                      function(data) {
+                          console.log(data)
+                      }
+              )
+          }
+  }
+  App.codes_index=0;
+  App.cur_id=0;
+  App.cur_prop={};
+  App.field_rules_index=0;
+
   function initEvents(){
       $("#parse_btn").click(function(){
-          $.post('http://'+App.baseUrl+'info_parser_rules/parse_resource/',{id_info_source:App.cur_id}, function(data) {
-              console.log(data)
-          })
+          App.parseResourses()
+
       })
       $("#p_content_btn").click(function(){
           //alert($("#p_url").val())
@@ -224,10 +277,6 @@
       $("#table").combobox({onSelect:function(rec){
           App.refreshCodes();
       }})
-//      $("#table").on("change",function(){
-//          App.refreshCodes();
-//          //App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
-//      })
 
   }//---initEvents---
   function saveTabProp(){
@@ -236,7 +285,8 @@
       var p_prop={id:App.cur_id}
       if (index==0) {//--Rules
           console.log( $("#have_fields :selected").val())
-          App.collections.parserRules.saveFieldRules()
+          //App.collections.parserRules.saveFieldRules()
+          App.saveCurRule();
       }
       if (index==1) {//--Auth
           p_prop={id:App.cur_id,p_auth_login: $("#p_auth_login").val(),p_auth_psw: $("#p_auth_psw").val()}
@@ -248,11 +298,22 @@
 
 
   }//---e:saveProp---
+  function reloadTabProp() {
+      var tab = $('#tt').tabs('getSelected');
+      var index = $('#tt').tabs('getTabIndex',tab);
+      if (index==0) {//--Rules
+          $('#dg_rules').datagrid('load', {
+              type:"post",
+              operation:$("#operation").val(),
+              kind:$("#kind").val(),
+              id_info_source:App.cur_id
+          });
+      }
+  }
   function bindPropFields(prop) {
-     console.log("Bind:",prop)
+    /// console.log("Bind:",prop)
      $("#p__source_url").val(""+prop.p_url)
      for (p in prop) {
-
          var prop_name=p.indexOf("p_")
          if (prop_name==0) {
              //console.log("p=",p,"prop[p]=",prop[p])
@@ -386,76 +447,23 @@
   App.collections.extCodes=new ExtCodes()
 
   //----e:initCOLLECTIONS--
+  //--------main--------------------------------------------------------------------------
     $(function(){
 
         $('#tt').tabs({
             onSelect: function(title,index){
-                console.log("tab select index=",index)
                 if (index==2){//----ext codes---
-                    //----pagination-------------
-                   // if (pager != undefined) {
-                           // pg=$('#dg_codes').datagrid('getPager')
-//                            console.log("pager=",pg)
-//                            pg.pagination({
-//                                onSelectPage: function(pageNumber, pageSize){
-//                                    alert(pageNumber)
-//                                    $(this).pagination('loading');
-//                                    App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id,page:pageNumber,rows:pageSize}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
-//                                    $(this).pagination('loaded');
-//                                }
-//                            })
-                   // }
-                   // App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
                 }
 
             }
         });
-        //-----grid rules---------------
-        $('#dg_rules').datagrid({
-            url:App.extCodesUrl+"/info_parser_rules/get_fields_rules/",
-            width:400,
-            singleSelect:true,
-            selectOnCheck:false,
-            queryParams: {
-                type:"post",
-                operation:$("#operation").val(),
-                kind:$("#kind").val(),
-                id_info_source:App.cur_id
-
-            },
-            columns:[[
-                {field:'p_field',title:'Field',width:80},
-                {field:'p_rules',title:'Rule',width:100}
-            ]]
-        });
-        //-----grid codes---------------
-        $('#dg_codes').datagrid({
-           url:App.extCodesUrl+"/ext_codes/get_ext_codes/",
-           queryParams: {
-               type:"post",
-               name_table:$("#table").combobox("getValue"),
-               id_info_source:App.cur_id
-
-           },
-           onLoadSuccess:function(data){
-              console.log("onLoadSuccess=",data)
-               App.collections.extCodes.reset(data.rows)
-           },
-           onClickRow:function(rowIndex){
-            if (lastIndex != rowIndex){
-                $('#dg_codes').datagrid('endEdit', lastIndex);
-                $('#dg_codes').datagrid('beginEdit', rowIndex);
-            }
-            lastIndex = rowIndex;
-           }
-       });
-
-        //App.collections.extCodes.fetch({type:"post",data:{table:$("#table").val()}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
+        //----------------ParserList--------------------------------------------------------
         $('#dg').datagrid({
             view: detailview,
             url:"http://<%=request.env["HTTP_HOST"] %>/info_sources/get_parsed_list/",
             queryParams: {
                 //'X-CSRF-Token': $('meta[name="csrf-token"]').attr('content')
+                'info_type':$('#info_type').combobox('getValue'),
                 'X-CSRF-Token': '<%= form_authenticity_token.to_s %>'
             },
             detailFormatter:function(index,row){
@@ -466,27 +474,23 @@
             },
             //onBeforeLoad:function() {ajaxBeforSend()},
             onSelect:function(rowIndex, rowData){
-               console.info(rowIndex, rowData.info_url)
+                console.info(rowIndex, rowData.info_url)
+                App.cur_id=rowData.id
+                App.cur_prop=rowData;//$('#dg').datagrid('getSelected')
 
-               App.cur_id=rowData.id
-               App.cur_prop=rowData;//$('#dg').datagrid('getSelected')
-               //$("#p_url").val(rowData.info_url)
-               App.collections.parserRules.getRules()
-               $('#dg_rules').datagrid('load', {
+                App.collections.parserRules.getRules()
+                $('#dg_rules').datagrid('load', {
                     type:"post",
                     operation:$("#operation").val(),
                     kind:$("#kind").val(),
                     id_info_source:App.cur_id
-               });
+                });
                 var tab = $('#tt').tabs('getSelected');
                 var tab_index = $('#tt').tabs('getTabIndex',tab);
                 if (tab_index==2){//--ext-codes---
                     App.refreshCodes();
-                    //App.collections.extCodes.fetch({type:"post",data:{name_table:$("#table").val(),id_info_source:App.cur_id}}).done(function(res){ App.collections.extCodes.fillGrid(res) })
                 }
-
-
-               bindPropFields(App.cur_prop);
+                bindPropFields(App.cur_prop);
             },
             onExpandRow: function(index,row){
                 var ddv = $(this).datagrid('getRowDetail',index).find('div.ddv');
@@ -503,6 +507,71 @@
                 $('#dg').datagrid('fixDetailRowHeight',index);
             }
         });
+        //-----grid rules---------------
+        $('#dg_rules').datagrid({
+            url:App.extCodesUrl+"/info_parser_rules/get_fields_rules/",
+            width:400,
+            singleSelect:true,
+            selectOnCheck:false,
+            queryParams: {
+                type:"post",
+                operation:$("#operation").val(),
+                kind:$("#kind").val(),
+                id_info_source:App.cur_id
+
+            },
+            onClickRow:function(rowIndex){
+                if (App.field_rules_index != rowIndex){
+                    $('#dg_rules').datagrid('endEdit', App.field_rules_index);
+                    $('#dg_rules').datagrid('beginEdit', rowIndex);
+                    var editors = $('#dg_rules').datagrid('getEditors', rowIndex);
+                    var rulesEditor=editors[0]
+                    //console.log(rulesEditor.target)
+                    rulesEditor.target.keypress(function(event) {
+                        //console.log(event.which)
+                        if (event.which ==0) {return;}
+                        if ( event.which == 13 ) {
+                            // event.preventDefault();
+                            //console.log(this.value)
+                            var row=$('#dg_rules').datagrid('getSelected')
+                            console.log(row)
+                            App.saveCurRule(row,this.value);
+                            $('#dg_rules').datagrid('endEdit', App.field_rules_index);
+                        }
+                    })
+
+                }
+                App.field_rules_index = rowIndex;
+            },
+            columns:[[
+                {field:'p_field',title:'Field',width:80},
+                {field:'p_rules',title:'Rule',width:300,editor:'text'}
+            ]]
+        });
+        //-----grid codes---------------
+        $('#dg_codes').datagrid({
+           url:App.extCodesUrl+"/ext_codes/get_ext_codes/",
+           queryParams: {
+               type:"post",
+               name_table:$("#table").combobox("getValue"),
+               id_info_source:App.cur_id
+
+           },
+           onLoadSuccess:function(data){
+              console.log("onLoadSuccess=",data)
+               App.collections.extCodes.reset(data.rows)
+           },
+           onClickRow:function(rowIndex){
+            if (App.codes_index != rowIndex){
+                $('#dg_codes').datagrid('endEdit', App.codes_index);
+                $('#dg_codes').datagrid('beginEdit', rowIndex);
+            }
+            App.codes_index = rowIndex;
+           }
+       });
+
+
+
         initEvents();
     });
 
