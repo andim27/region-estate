@@ -70,6 +70,11 @@
               <option value="<%=item.id %>"><%=item.name %></option>
           <% end %>
         </select>
+       Operation:
+        <select id="op">
+          <option value=0>Sell</option> <option value=1>Buy</option> <option value=2>Obmen</option>
+          <option value=3>Rent</option> <option value=4>Tenant</option>
+        </select>
       </div>
 
     </div>
@@ -220,23 +225,32 @@
               }
           });
           //console.log("saveFieldRules ",e)});
+      })
   }
-          App.parseResourses=function(){
-              $.post('http://'+App.baseUrl+'info_parser_rules/parse_resource/',
-                      {
-                          id_info_source:App.cur_id,
-                          info_type:$('#info_type').combobox('getValue'),
-                          who      :$('#who').combobox('getValue'),
-                          obj      :$('#obj').combobox('getValue'),
-                          room     :$('#room').combobox('getValue'),
-                          rayon    :$('#rayon').combobox('getValue')
-                      },
-                      function(data) {
-                          console.log(data)
-                      }
-              )
+  App.parseResourses=function(){
+      var rows_ch=$('#dg').datagrid('getChecked');
+      var res_arr=[]
+      if (rows_ch.length !=0) {
+          for (var i in rows_ch){
+               res_arr.push(rows_ch[i].id)
           }
+      }
+      $.post('http://'+App.baseUrl+'info_parser_rules/parse_resource/',
+              {
+                  id_info_source:App.cur_id,
+                  res_arr:res_arr,
+                  info_type:$('#info_type').combobox('getValue'),
+                  who      :$('#who').combobox('getValue'),
+                  obj      :$('#obj').combobox('getValue'),
+                  room     :$('#room').combobox('getValue'),
+                  rayon    :$('#rayon').combobox('getValue'),
+              },
+              function(data) {
+                  console.log(data)
+              }
+      )
   }
+
   App.codes_index=0;
   App.cur_id=0;
   App.cur_prop={};
